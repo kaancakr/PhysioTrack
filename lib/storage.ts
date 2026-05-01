@@ -1,19 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 
-import {
-  type PersistedProgressState,
-  type ThemePreference,
-  type UserIntakeProfile,
-} from "@/types/domain";
 import { type AuthTokenPair } from "@/types/auth";
+import {
+    type PersistedProgressState,
+    type ThemePreference,
+    type UserIntakeProfile,
+} from "@/types/domain";
 
-const THEME_PREFERENCE_KEY = "pyhsiotrack:theme-preference";
-const PROGRESS_STATE_KEY_PREFIX = "pyhsiotrack:progress-state";
-const USER_INTAKE_KEY_PREFIX = "pyhsiotrack:user-intake";
-const GUEST_INTAKE_KEY = "pyhsiotrack:guest-intake";
-const AUTH_TOKEN_PAIR_KEY = "pyhsiotrack.auth-token-pair";
-const PENDING_SIGNUP_EMAIL_KEY = "pyhsiotrack:pending-signup-email";
+const THEME_PREFERENCE_KEY = "physiotrack:theme-preference";
+const PROGRESS_STATE_KEY_PREFIX = "physiotrack:progress-state";
+const USER_INTAKE_KEY_PREFIX = "physiotrack:user-intake";
+const GUEST_INTAKE_KEY = "physiotrack:guest-intake";
+const AUTH_TOKEN_PAIR_KEY = "physiotrack.auth-token-pair";
+const PENDING_SIGNUP_EMAIL_KEY = "physiotrack:pending-signup-email";
 
 function parseStoredJson(value: string, key: string): unknown {
   try {
@@ -133,7 +133,10 @@ export async function writeUserIntakeProfile(
   userId: string,
   intakeProfile: UserIntakeProfile,
 ) {
-  await AsyncStorage.setItem(getUserIntakeKey(userId), JSON.stringify(intakeProfile));
+  await AsyncStorage.setItem(
+    getUserIntakeKey(userId),
+    JSON.stringify(intakeProfile),
+  );
 }
 
 export async function readGuestIntakeProfile() {
@@ -152,7 +155,9 @@ export async function readGuestIntakeProfile() {
   return parsedValue as UserIntakeProfile;
 }
 
-export async function writeGuestIntakeProfile(intakeProfile: UserIntakeProfile) {
+export async function writeGuestIntakeProfile(
+  intakeProfile: UserIntakeProfile,
+) {
   await AsyncStorage.setItem(GUEST_INTAKE_KEY, JSON.stringify(intakeProfile));
 }
 
@@ -172,7 +177,10 @@ export async function readStoredAuthTokenPair() {
 }
 
 export async function writeStoredAuthTokenPair(tokenPair: AuthTokenPair) {
-  await SecureStore.setItemAsync(AUTH_TOKEN_PAIR_KEY, JSON.stringify(tokenPair));
+  await SecureStore.setItemAsync(
+    AUTH_TOKEN_PAIR_KEY,
+    JSON.stringify(tokenPair),
+  );
 }
 
 export async function clearStoredAuthTokenPair() {
