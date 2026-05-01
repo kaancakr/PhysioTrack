@@ -1,5 +1,5 @@
 import * as AppleAuthentication from "expo-apple-authentication";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -35,9 +35,7 @@ export default function SignupScreen() {
       setSuccessMessage(null);
       setIsSubmitting(true);
       await signUp(fullName.trim(), email.trim(), password);
-      setSuccessMessage(
-        "Your account is ready. If your Supabase project requires email confirmation, please confirm your email before signing in.",
-      );
+      router.push("/(auth)/verify-email");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "An unknown sign-up error occurred.";

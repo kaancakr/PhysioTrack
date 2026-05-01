@@ -5,5 +5,47 @@
     "subtitle": "PhysioTrack ile fizik tedavi egzersizlerini meditasyon huzuruyla birleştirin. Size özel programlarla her adımda daha güçlü hissedin.",
     "createAccount": "Hesap Oluşturun",
     "alreadyHaveAccount": "Zaten Hesabınız Var"
+  },
+  "onboarding": {
+    "introTitle": "PhysioTrack'e Hoşgeldiniz",
+    "introSubtitle": "Daha sağlıklı bir sen için kişiselleştirilmiş fizik tedavi ve meditasyon rutinlerini keşfet.",
+    "introStart": "Başla",
+    "eyebrow": "Planınızı oluşturun",
+    "title": "İyileşme panonuzu kişiselleştirelim.",
+    "subtitle": "Hedeflerinizi, odak noktanızı ve günlük takibinizi şekillendirmek için birkaç detaya ihtiyacımız var.",
+    "step1": {
+      "title": "Hakkınızda",
+      "text": "Ev planınızın en başından beri size özel hissettirmesi için temel bilgilerinizi paylaşın.",
+      "fullNameLabel": "Adınız Soyadınız",
+      "fullNamePlaceholder": "Ahmet Yılmaz"
+    },
+    "step2": {
+      "title": "Odak noktanızı seçin",
+      "text": "Sizin için en uygun egzersiz programını ana ekranınızın en üstüne getireceğiz."
+    },
+    "step3": {
+      "title": "Haftalık ritminizi belirleyin",
+      "text": "Bu hedefler, panonuzdaki ilerleme çubuklarına ve halkalarına güç verir.",
+      "dailyStepGoalLabel": "Günlük adım hedefi"
+    },
+    "buttons": {
+      "back": "Geri",
+      "continue": "Devam",
+      "finish": "Kurulumu tamamla"
+    },
+    "options": {
+      "focus": {
+        "neck": { "label": "Boyun", "desc": "Masa başı gerginliği ve sertliği" },
+        "shoulder": { "label": "Omuz", "desc": "Hareketlilik ve kontrol" },
+        "back": { "label": "Sırt / Bel", "desc": "Destek ve hareket rahatlığı" },
+        "knee": { "label": "Diz", "desc": "Güç ve güven" }
+      },
+      "weekly": {
+        "2": "2 seans",
+        "3": "3 seans",
+        "4": "4 seans",
+        "5": "5 seans"
+      }
+    }
   }
 }

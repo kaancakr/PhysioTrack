@@ -9,6 +9,7 @@ import {
 const THEME_PREFERENCE_KEY = "pyhsiotrack:theme-preference";
 const PROGRESS_STATE_KEY_PREFIX = "pyhsiotrack:progress-state";
 const USER_INTAKE_KEY_PREFIX = "pyhsiotrack:user-intake";
+const GUEST_INTAKE_KEY = "pyhsiotrack:guest-intake";
 
 function parseStoredJson(value: string, key: string): unknown {
   try {
@@ -107,4 +108,28 @@ export async function writeUserIntakeProfile(
   intakeProfile: UserIntakeProfile,
 ) {
   await AsyncStorage.setItem(getUserIntakeKey(userId), JSON.stringify(intakeProfile));
+}
+
+export async function readGuestIntakeProfile() {
+  const storedValue = await AsyncStorage.getItem(GUEST_INTAKE_KEY);
+
+  if (storedValue === null) {
+    return null;
+  }
+
+  const parsedValue = parseStoredJson(storedValue, GUEST_INTAKE_KEY);
+
+  if (typeof parsedValue !== "object" || parsedValue === null) {
+    throw new Error("Unexpected guest intake state.");
+  }
+
+  return parsedValue as UserIntakeProfile;
+}
+
+export async function writeGuestIntakeProfile(intakeProfile: UserIntakeProfile) {
+  await AsyncStorage.setItem(GUEST_INTAKE_KEY, JSON.stringify(intakeProfile));
+}
+
+export async function clearGuestIntakeProfile() {
+  await AsyncStorage.removeItem(GUEST_INTAKE_KEY);
 }

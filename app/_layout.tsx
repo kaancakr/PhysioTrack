@@ -13,7 +13,7 @@ function NavigationGate() {
   const router = useRouter();
   const segments = useSegments();
   const { colors, isDark } = useAppTheme();
-  const { currentUserId, isLoading, isOnboardingComplete } = useSession();
+  const { currentUserId, isLoading, isOnboardingComplete, hasCompletedGuestOnboarding } = useSession();
 
   const topSegment = segments[0];
 
@@ -28,8 +28,12 @@ function NavigationGate() {
 
     const isProtectedAppRoute = isTabRoute || isExerciseRoute || isSessionRoute;
 
-    if (currentUserId === null && !isAuthRoute) {
-      router.replace("/(auth)/welcome");
+    if (currentUserId === null) {
+      if (!hasCompletedGuestOnboarding && !isOnboardingRoute) {
+        router.replace("/onboarding");
+      } else if (hasCompletedGuestOnboarding && !isAuthRoute) {
+        router.replace("/(auth)/welcome");
+      }
       return;
     }
 
@@ -51,7 +55,14 @@ function NavigationGate() {
     ) {
       router.replace("/(tabs)/dashboard");
     }
-  }, [currentUserId, isLoading, isOnboardingComplete, router, topSegment]);
+  }, [
+    currentUserId,
+    isLoading,
+    isOnboardingComplete,
+    hasCompletedGuestOnboarding,
+    router,
+    topSegment,
+  ]);
 
   return (
     <>

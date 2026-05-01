@@ -5,5 +5,47 @@
     "subtitle": "Combine physical therapy exercises with the peace of meditation using PhysioTrack. Feel stronger at every step with personalized programs.",
     "createAccount": "Create Account",
     "alreadyHaveAccount": "Already Have an Account"
+  },
+  "onboarding": {
+    "introTitle": "Welcome PhysioTrack",
+    "introSubtitle": "Discover personalized physical therapy and meditation routines for a healthier you.",
+    "introStart": "Start",
+    "eyebrow": "Set up your plan",
+    "title": "Let's tailor your recovery dashboard.",
+    "subtitle": "We'll use a few details to shape your goals, focus area, and daily tracking.",
+    "step1": {
+      "title": "About you",
+      "text": "Share the basics so your home plan feels personal from the start.",
+      "fullNameLabel": "Full name",
+      "fullNamePlaceholder": "Jamie Patient"
+    },
+    "step2": {
+      "title": "Choose your focus",
+      "text": "We'll bring the most relevant exercise program to the top of your home screen."
+    },
+    "step3": {
+      "title": "Set your weekly rhythm",
+      "text": "These goals power the bars and circles on your dashboard.",
+      "dailyStepGoalLabel": "Daily step goal"
+    },
+    "buttons": {
+      "back": "Back",
+      "continue": "Continue",
+      "finish": "Finish setup"
+    },
+    "options": {
+      "focus": {
+        "neck": { "label": "Neck", "desc": "Desk strain and stiffness" },
+        "shoulder": { "label": "Shoulder", "desc": "Mobility and control" },
+        "back": { "label": "Back", "desc": "Support and movement comfort" },
+        "knee": { "label": "Knee", "desc": "Strength and confidence" }
+      },
+      "weekly": {
+        "2": "2 sessions",
+        "3": "3 sessions",
+        "4": "4 sessions",
+        "5": "5 sessions"
+      }
+    }
   }
 }

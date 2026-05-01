@@ -10,7 +10,13 @@ import {
 import { type Session } from "@supabase/supabase-js";
 import { Platform } from "react-native";
 
-import { readUserIntakeProfile, writeUserIntakeProfile } from "@/lib/storage";
+import {
+  clearGuestIntakeProfile,
+  readGuestIntakeProfile,
+  readUserIntakeProfile,
+  writeGuestIntakeProfile,
+  writeUserIntakeProfile,
+} from "@/lib/storage";
 import {
   getBypassProfile,
   getSupabaseClient,
@@ -26,6 +32,7 @@ type SessionContextValue = {
   configurationError: string | null;
   isLoading: boolean;
   isOnboardingComplete: boolean;
+  hasCompletedGuestOnboarding: boolean;
   isTestingBypassEnabled: boolean;
   intakeProfile: UserIntakeProfile | null;
   profile: UserProfile | null;
@@ -83,6 +90,7 @@ export function SessionProvider(props: PropsWithChildren) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [intakeProfile, setIntakeProfile] = useState<UserIntakeProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCompletedGuestOnboarding, setHasCompletedGuestOnboarding] = useState(false);
   const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
 
   const applySessionState = useCallback(
@@ -91,7 +99,16 @@ export function SessionProvider(props: PropsWithChildren) {
       setProfile(mapUserToProfile(nextSession?.user ?? null));
 
       if (nextSession?.user.id !== undefined) {
-        const storedIntakeProfile = await readUserIntakeProfile(nextSession.user.id);
+        let storedIntakeProfile = await readUserIntakeProfile(nextSession.user.id);
+
+        const guestProfile = await readGuestIntakeProfile();
+        if (guestProfile !== null) {
+          await writeUserIntakeProfile(nextSession.user.id, guestProfile);
+          storedIntakeProfile = guestProfile;
+          await clearGuestIntakeProfile();
+          setHasCompletedGuestOnboarding(false);
+        }
+
         setIntakeProfile(storedIntakeProfile);
         return;
       }
@@ -146,6 +163,11 @@ export function SessionProvider(props: PropsWithChildren) {
     const client = getSupabaseClient();
 
     const initializeSession = async () => {
+      const guestProfile = await readGuestIntakeProfile();
+      if (guestProfile !== null) {
+        setHasCompletedGuestOnboarding(true);
+      }
+
       const { data, error } = await client.auth.getSession();
 
       if (error !== null) {
@@ -187,7 +209,9 @@ export function SessionProvider(props: PropsWithChildren) {
     const userId = profile?.id;
 
     if (userId === undefined) {
-      throw new Error("Cannot save onboarding profile without a signed-in user.");
+      await writeGuestIntakeProfile(nextIntakeProfile);
+      setHasCompletedGuestOnboarding(true);
+      return;
     }
 
     await writeUserIntakeProfile(userId, nextIntakeProfile);
@@ -318,6 +342,7 @@ export function SessionProvider(props: PropsWithChildren) {
         isAppleAuthAvailable,
         isLoading,
         isOnboardingComplete: intakeProfile !== null,
+        hasCompletedGuestOnboarding,
         isTestingBypassEnabled,
         intakeProfile,
         profile,
