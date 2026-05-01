@@ -1,17 +1,18 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Link } from "expo-router";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AppleAuthButton } from "@/components/apple-auth-button";
 import { AppButton } from "@/components/app-button";
-import { ArtworkPanel } from "@/components/artwork-panel";
+import { AppleAuthButton } from "@/components/apple-auth-button";
 import { useAppTheme } from "@/providers/theme-provider";
 
 export default function WelcomeScreen() {
   const { colors } = useAppTheme();
   const [appleAuthError, setAppleAuthError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   return (
     <SafeAreaView
@@ -24,25 +25,20 @@ export default function WelcomeScreen() {
       >
         <View style={styles.hero}>
           <Text style={[styles.eyebrow, { color: colors.accent }]}>
-            Home physiotherapy, guided clearly
+            {t("welcome.eyebrow")}
           </Text>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Build a gentle daily routine you can actually stick with.
+            {t("welcome.title")}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            PyhsioTrack helps patients follow no-equipment exercise programs with
-            clear steps, timers, and progress tracking.
+            {t("welcome.subtitle")}
           </Text>
         </View>
 
-        <ArtworkPanel
-          illustration={{
-            icon: "body",
-            background: colors.accentSoft,
-            tint: colors.accent,
-          }}
-          title="Move with confidence"
-          subtitle="Follow each exercise step with calm pacing, visible progress, and practical guidance."
+        <Image
+          source={require("@/assets/images/welcome-illustration.png")}
+          style={styles.illustration}
+          resizeMode="contain"
         />
 
         <View style={styles.actions}>
@@ -56,10 +52,15 @@ export default function WelcomeScreen() {
             </Text>
           ) : null}
           <Link asChild href="/(auth)/signup">
-            <AppButton label="Create account" />
+            <AppButton label={t("welcome.createAccount")} />
           </Link>
           <Link asChild href="/(auth)/login">
-            <AppButton label="I already have an account" variant="secondary" />
+            <AppButton
+              label={t("welcome.alreadyHaveAccount")}
+              labelStyle={styles.secondaryActionButtonLabel}
+              style={styles.secondaryActionButton}
+              variant="secondary"
+            />
           </Link>
         </View>
       </ScrollView>
@@ -100,10 +101,21 @@ const styles = StyleSheet.create({
   actions: {
     gap: 12,
   },
+  secondaryActionButton: {
+    opacity: 0.72,
+  },
+  secondaryActionButtonLabel: {
+    fontWeight: "600",
+  },
   errorText: {
     fontSize: 14,
     fontWeight: "600",
     lineHeight: 20,
     textAlign: "center",
+  },
+  illustration: {
+    width: "100%",
+    height: 340,
+    borderRadius: 24,
   },
 });

@@ -1,10 +1,10 @@
 import { type ThemeColors, type ThemeMode } from "@/types/domain";
 
 const LIGHT_THEME: ThemeColors = {
-  accent: "#1681FF",
+  accent: "#4EAF63",
   accentContrast: "#FFFFFF",
-  accentSoft: "#DCEBFF",
-  background: "#EAEFFC",
+  accentSoft: "#A7D7B1",
+  background: "#ffffff",
   border: "#D7E0F0",
   card: "#FFFFFF",
   danger: "#DB5D67",
@@ -16,12 +16,12 @@ const LIGHT_THEME: ThemeColors = {
 };
 
 const DARK_THEME: ThemeColors = {
-  accent: "#58A6FF",
+  accent: "#5FC777",
   accentContrast: "#081120",
-  accentSoft: "#203A63",
-  background: "#0F1728",
+  accentSoft: "#A7D7B1",
+  background: "#5f7470",
   border: "#22314A",
-  card: "#172133",
+  card: "#709775",
   danger: "#FF8D9A",
   success: "#72E2B2",
   surfaceMuted: "#202B3F",

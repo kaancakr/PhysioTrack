@@ -1,4 +1,5 @@
 import "react-native-url-polyfill/auto";
+import "../lib/i18n";
 
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -12,7 +13,13 @@ function NavigationGate() {
   const router = useRouter();
   const segments = useSegments();
   const { colors, isDark } = useAppTheme();
-  const { currentUserId, isLoading, isOnboardingComplete } = useSession();
+  const {
+    currentUserId,
+    hasCompletedGuestOnboarding,
+    isLoading,
+    isOnboardingComplete,
+    pendingSignupEmail,
+  } = useSession();
 
   const topSegment = segments[0];
 
@@ -24,11 +31,20 @@ function NavigationGate() {
     const isOnboardingRoute = topSegment === "onboarding";
     const isExerciseRoute = topSegment === "exercise";
     const isSessionRoute = topSegment === "session";
+    const authSubRoute = segments[1];
+    const isLoginRoute = isAuthRoute && authSubRoute === "login";
+    const isVerifyEmailRoute = isAuthRoute && authSubRoute === "verify-email";
 
     const isProtectedAppRoute = isTabRoute || isExerciseRoute || isSessionRoute;
 
-    if (currentUserId === null && !isAuthRoute) {
-      router.replace("/(auth)/welcome");
+    if (currentUserId === null) {
+      if (!hasCompletedGuestOnboarding && !isOnboardingRoute && !isLoginRoute) {
+        router.replace("/onboarding");
+      } else if (isVerifyEmailRoute && pendingSignupEmail === null) {
+        router.replace("/(auth)/signup");
+      } else if (hasCompletedGuestOnboarding && !isAuthRoute) {
+        router.replace("/(auth)/welcome");
+      }
       return;
     }
 
@@ -50,7 +66,16 @@ function NavigationGate() {
     ) {
       router.replace("/(tabs)/dashboard");
     }
-  }, [currentUserId, isLoading, isOnboardingComplete, router, topSegment]);
+  }, [
+    currentUserId,
+    isLoading,
+    isOnboardingComplete,
+    hasCompletedGuestOnboarding,
+    router,
+    pendingSignupEmail,
+    segments,
+    topSegment,
+  ]);
 
   return (
     <>

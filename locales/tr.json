@@ -1,0 +1,128 @@
+{
+  "welcome": {
+    "eyebrow": "EVDE FİZYOTERAPİ VE ZİHİNSEL DENGE",
+    "title": "PhysioTrack'e Hoşgeldiniz!",
+    "subtitle": "PhysioTrack ile fizik tedavi egzersizlerini meditasyon huzuruyla birleştirin. Size özel programlarla her adımda daha güçlü hissedin.",
+    "createAccount": "Hesap Oluşturun",
+    "alreadyHaveAccount": "Zaten Hesabınız Var"
+  },
+  "onboarding": {
+    "introTitle": "PhysioTrack'e Hoşgeldiniz",
+    "introSubtitle": "Daha sağlıklı bir sen için kişiselleştirilmiş fizik tedavi ve meditasyon rutinlerini keşfet.",
+    "introBadge": "Kişiselleştirilmiş iyileşme planı",
+    "introFloatingLeft": "Günlük ilerleme",
+    "introFloatingRight": "Akıllı rutin",
+    "introBenefitSetup": "2 dk kurulum",
+    "introBenefitGuided": "Güvenle rehberli",
+    "introStart": "Başla",
+    "defaults": {
+      "fullName": "Hasta"
+    },
+    "progress": {
+      "aboutTitle": "Senin hakkında",
+      "aboutDesc": "Bu planın kimin için olduğunu söyle, deneyimi ilk ekrandan itibaren kişiselleştirelim.",
+      "focusTitle": "Odak alanı",
+      "focusDesc": "En çok destek istediğin bölgeyi seç, egzersiz programın ilk andan itibaren daha ilgili olsun.",
+      "goalsTitle": "Hedefler",
+      "goalsDesc": "Sürdürülebilir bir tempo seçerek iyileşme ivmeni her gün görünür kıl."
+    },
+    "step1": {
+      "title": "Hakkınızda",
+      "text": "Ev planınızın en başından beri size özel hissettirmesi için temel bilgilerinizi paylaşın.",
+      "ageTitle": "Yaş aralığını seçin",
+      "ageText": "Bu bilgi, size hız ve konfor düzeyinize daha uygun bir plan sunmamıza yardımcı olur.",
+      "fullNameLabel": "Adınız Soyadınız",
+      "fullNamePlaceholder": "Ahmet Yılmaz"
+    },
+    "step2": {
+      "title": "Odak noktanızı seçin",
+      "text": "Sizin için en uygun egzersiz programını ana ekranınızın en üstüne getireceğiz."
+    },
+    "step3": {
+      "title": "Haftalık ritminizi belirleyin",
+      "text": "Bu hedefler, panonuzdaki ilerleme çubuklarına ve halkalarına güç verir.",
+      "weeklyTitle": "Haftada ne kadar hareket etmek istersiniz?",
+      "weeklyText": "Sürdürmesi kolay ve gerçekçi hissettiren bir haftalık tempo seçin.",
+      "weeklyCardHint": "Net bir iyileşme rutini",
+      "dailyStepGoalLabel": "Günlük adım hedefi",
+      "stepsText": "Günlük yürüyüş hedefi, egzersiz seanslarının dışında da ilerlemeni görünür tutar.",
+      "stepsCardHint": "Nazik günlük ivme"
+    },
+    "buttons": {
+      "back": "Geri",
+      "continue": "Devam",
+      "finish": "Kurulumu tamamla"
+    },
+    "footerHint": "Bu tercihleri daha sonra profil sayfasından güncelleyebilirsin.",
+    "options": {
+      "focus": {
+        "neck": {
+          "label": "Boyun",
+          "desc": "Masa başı gerginliği ve sertliği"
+        },
+        "shoulder": { "label": "Omuz", "desc": "Hareketlilik ve kontrol" },
+        "back": {
+          "label": "Sırt / Bel",
+          "desc": "Destek ve hareket rahatlığı"
+        },
+        "knee": { "label": "Diz", "desc": "Güç ve güven" }
+      },
+      "weekly": {
+        "2": "2 seans",
+        "3": "3 seans",
+        "4": "4 seans",
+        "5": "5 seans"
+      }
+    }
+  }
+  ,
+  "auth": {
+    "fields": {
+      "emailLabel": "E-posta",
+      "emailPlaceholder": "hasta@example.com",
+      "passwordLabel": "Şifre"
+    },
+    "errors": {
+      "unknownSignIn": "Bilinmeyen bir giriş hatası oluştu.",
+      "unknownSignUp": "Bilinmeyen bir kayıt hatası oluştu.",
+      "unknownVerify": "Bilinmeyen bir doğrulama hatası oluştu.",
+      "unknownResend": "Bilinmeyen bir yeniden gönderme hatası oluştu."
+    },
+    "login": {
+      "eyebrow": "Günlük iyileşme",
+      "title": "Tekrar hoş geldin",
+      "subtitle": "Rehberli egzersizlerine devam etmek, rutinini geri kazanmak ve ilerleme serini sürdürmek için giriş yap.",
+      "featureQuickAccess": "Hızlı erişim",
+      "featureSavedProgress": "Kayıtlı ilerleme",
+      "passwordPlaceholder": "Şifreni gir",
+      "submitLabel": "Giriş yap",
+      "submittingLabel": "Giriş yapılıyor...",
+      "footerPrefix": "PhysioTrack'e yeni misin?",
+      "footerLink": "Hesap oluştur"
+    },
+    "signup": {
+      "eyebrow": "Rehberli iyileşme",
+      "title": "Hesabını oluştur",
+      "subtitle": "Onboarding profilin hazır. Planını kaydetmek ve e-posta doğrulamaya devam etmek için hesap bilgilerini ekle.",
+      "featureProfileReady": "Profil hazır",
+      "featureEmailVerification": "E-posta doğrulama",
+      "passwordPlaceholder": "Güçlü bir şifre oluştur",
+      "submitLabel": "Hesap oluştur",
+      "submittingLabel": "Hesap oluşturuluyor...",
+      "footerPrefix": "Zaten hesabın var mı?",
+      "footerLink": "Giriş yap"
+    },
+    "verifyEmail": {
+      "title": "E-postanı doğrula",
+      "subtitle": "E-posta adresine gönderilen 6 haneli doğrulama kodunu gir.",
+      "codeSentTo": "Kod şuraya gönderildi: {{email}}",
+      "verifyLabel": "Doğrula",
+      "verifyingLabel": "Doğrulanıyor...",
+      "resendLabel": "Kodu yeniden gönder",
+      "sendingLabel": "Gönderiliyor...",
+      "verifiedSuccess": "E-postan doğrulandı.",
+      "resendSuccess": "Yeni bir doğrulama kodu gönderildi.",
+      "changeEmail": "E-posta adresini değiştir"
+    }
+  }
+}

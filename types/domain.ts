@@ -30,6 +30,9 @@ export type UserProfile = {
   email: string;
   fullName: string | null;
   id: string;
+  isActive: boolean;
+  isEmailVerified: boolean;
+  isStaff: boolean;
 };
 
 export type WeeklyGoal = 2 | 3 | 4 | 5;

@@ -3,6 +3,7 @@ import {
   StyleProp,
   StyleSheet,
   Text,
+  type TextStyle,
   ViewStyle,
 } from "react-native";
 
@@ -11,6 +12,7 @@ import { useAppTheme } from "@/providers/theme-provider";
 type AppButtonProps = {
   disabled?: boolean;
   label: string;
+  labelStyle?: StyleProp<TextStyle>;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   variant?: "primary" | "secondary";
@@ -19,6 +21,7 @@ type AppButtonProps = {
 export function AppButton(props: AppButtonProps) {
   const { colors } = useAppTheme();
   const isPrimary = props.variant !== "secondary";
+  const isDisabled = props.disabled === true;
 
   return (
     <Pressable
@@ -27,9 +30,17 @@ export function AppButton(props: AppButtonProps) {
       style={[
         styles.button,
         {
-          backgroundColor: isPrimary ? colors.accent : colors.surfaceMuted,
-          borderColor: isPrimary ? colors.accent : colors.border,
-          opacity: props.disabled ? 0.6 : 1,
+          backgroundColor: isPrimary
+            ? isDisabled
+              ? colors.accentSoft
+              : colors.accent
+            : colors.surfaceMuted,
+          borderColor: isPrimary
+            ? isDisabled
+              ? colors.accentSoft
+              : colors.accent
+            : colors.border,
+          opacity: isDisabled && !isPrimary ? 0.6 : 1,
         },
         props.style,
       ]}
@@ -37,8 +48,11 @@ export function AppButton(props: AppButtonProps) {
       <Text
         style={[
           styles.label,
+          props.labelStyle,
           {
-            color: isPrimary ? colors.accentContrast : colors.textPrimary,
+            color: isPrimary
+              ? colors.accentContrast
+              : colors.textPrimary,
           },
         ]}
       >

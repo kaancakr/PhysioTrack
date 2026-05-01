@@ -72,7 +72,7 @@ export default function ProfileScreen() {
               {profile?.fullName ?? "Patient"}
             </Text>
             <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-              {profile?.email ?? "Signed in with Supabase"}
+              {profile?.email ?? "Signed in account"}
             </Text>
             {isTestingBypassEnabled ? (
               <Text style={[styles.warningText, { color: colors.accent }]}>
