@@ -1,12 +1,11 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Link } from "expo-router";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AppleAuthButton } from "@/components/apple-auth-button";
 import { AppButton } from "@/components/app-button";
-import { ArtworkPanel } from "@/components/artwork-panel";
+import { AppleAuthButton } from "@/components/apple-auth-button";
 import { useAppTheme } from "@/providers/theme-provider";
 
 export default function WelcomeScreen() {
@@ -24,25 +23,21 @@ export default function WelcomeScreen() {
       >
         <View style={styles.hero}>
           <Text style={[styles.eyebrow, { color: colors.accent }]}>
-            Home physiotherapy, guided clearly
+            EVDE FİZYOTERAPİ VE ZİHİNSEL DENGE
           </Text>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Build a gentle daily routine you can actually stick with.
+            Merhaba PhysioTrack!
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            PyhsioTrack helps patients follow no-equipment exercise programs with
-            clear steps, timers, and progress tracking.
+            PhysioTrack ile fizik tedavi egzersizlerini
+            meditasyon huzuruyla birleştirin. Size özel programlarla her adımda daha güçlü hissedin.
           </Text>
         </View>
 
-        <ArtworkPanel
-          illustration={{
-            icon: "body",
-            background: colors.accentSoft,
-            tint: colors.accent,
-          }}
-          title="Move with confidence"
-          subtitle="Follow each exercise step with calm pacing, visible progress, and practical guidance."
+        <Image
+          source={require("@/assets/images/welcome-illustration.png")}
+          style={styles.illustration}
+          resizeMode="contain"
         />
 
         <View style={styles.actions}>
@@ -56,10 +51,10 @@ export default function WelcomeScreen() {
             </Text>
           ) : null}
           <Link asChild href="/(auth)/signup">
-            <AppButton label="Create account" />
+            <AppButton label="Hesap Oluşturun" />
           </Link>
           <Link asChild href="/(auth)/login">
-            <AppButton label="I already have an account" variant="secondary" />
+            <AppButton label="Zaten Hesabınız Var" variant="secondary" />
           </Link>
         </View>
       </ScrollView>
@@ -105,5 +100,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 20,
     textAlign: "center",
+  },
+  illustration: {
+    width: "100%",
+    height: 340,
+    borderRadius: 24,
   },
 });
