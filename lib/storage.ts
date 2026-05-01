@@ -1,15 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 
 import {
   type PersistedProgressState,
   type ThemePreference,
   type UserIntakeProfile,
 } from "@/types/domain";
+import { type AuthTokenPair } from "@/types/auth";
 
 const THEME_PREFERENCE_KEY = "pyhsiotrack:theme-preference";
 const PROGRESS_STATE_KEY_PREFIX = "pyhsiotrack:progress-state";
 const USER_INTAKE_KEY_PREFIX = "pyhsiotrack:user-intake";
 const GUEST_INTAKE_KEY = "pyhsiotrack:guest-intake";
+const AUTH_TOKEN_PAIR_KEY = "pyhsiotrack.auth-token-pair";
+const PENDING_SIGNUP_EMAIL_KEY = "pyhsiotrack:pending-signup-email";
 
 function parseStoredJson(value: string, key: string): unknown {
   try {
@@ -29,6 +33,28 @@ function getProgressStorageKey(userId: string) {
 
 function getUserIntakeKey(userId: string) {
   return `${USER_INTAKE_KEY_PREFIX}:${userId}`;
+}
+
+function validateAuthTokenPair(value: unknown) {
+  if (typeof value !== "object" || value === null) {
+    throw new Error("Unexpected auth token pair structure in secure storage.");
+  }
+
+  const access = "access" in value ? value.access : null;
+  const refresh = "refresh" in value ? value.refresh : null;
+
+  if (typeof access !== "string" || access.length === 0) {
+    throw new Error("Missing access token in secure storage.");
+  }
+
+  if (typeof refresh !== "string" || refresh.length === 0) {
+    throw new Error("Missing refresh token in secure storage.");
+  }
+
+  return {
+    access,
+    refresh,
+  } satisfies AuthTokenPair;
 }
 
 export async function readThemePreference() {
@@ -132,4 +158,52 @@ export async function writeGuestIntakeProfile(intakeProfile: UserIntakeProfile) 
 
 export async function clearGuestIntakeProfile() {
   await AsyncStorage.removeItem(GUEST_INTAKE_KEY);
+}
+
+export async function readStoredAuthTokenPair() {
+  const storedValue = await SecureStore.getItemAsync(AUTH_TOKEN_PAIR_KEY);
+
+  if (storedValue === null) {
+    return null;
+  }
+
+  const parsedValue = parseStoredJson(storedValue, AUTH_TOKEN_PAIR_KEY);
+  return validateAuthTokenPair(parsedValue);
+}
+
+export async function writeStoredAuthTokenPair(tokenPair: AuthTokenPair) {
+  await SecureStore.setItemAsync(AUTH_TOKEN_PAIR_KEY, JSON.stringify(tokenPair));
+}
+
+export async function clearStoredAuthTokenPair() {
+  await SecureStore.deleteItemAsync(AUTH_TOKEN_PAIR_KEY);
+}
+
+export async function readPendingSignupEmail() {
+  const storedValue = await AsyncStorage.getItem(PENDING_SIGNUP_EMAIL_KEY);
+
+  if (storedValue === null) {
+    return null;
+  }
+
+  const parsedValue = parseStoredJson(storedValue, PENDING_SIGNUP_EMAIL_KEY);
+
+  if (typeof parsedValue !== "string" || parsedValue.trim().length === 0) {
+    throw new Error("Unexpected pending signup email value in storage.");
+  }
+
+  return parsedValue.trim();
+}
+
+export async function writePendingSignupEmail(email: string) {
+  await AsyncStorage.setItem(PENDING_SIGNUP_EMAIL_KEY, JSON.stringify(email));
+}
+
+export async function clearPendingSignupEmail() {
+  await AsyncStorage.removeItem(PENDING_SIGNUP_EMAIL_KEY);
+}
+
+export async function clearAllStoredData() {
+  await AsyncStorage.clear();
+  await SecureStore.deleteItemAsync(AUTH_TOKEN_PAIR_KEY);
 }

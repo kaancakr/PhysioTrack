@@ -55,7 +55,12 @@ export default function WelcomeScreen() {
             <AppButton label={t("welcome.createAccount")} />
           </Link>
           <Link asChild href="/(auth)/login">
-            <AppButton label={t("welcome.alreadyHaveAccount")} variant="secondary" />
+            <AppButton
+              label={t("welcome.alreadyHaveAccount")}
+              labelStyle={styles.secondaryActionButtonLabel}
+              style={styles.secondaryActionButton}
+              variant="secondary"
+            />
           </Link>
         </View>
       </ScrollView>
@@ -95,6 +100,12 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: 12,
+  },
+  secondaryActionButton: {
+    opacity: 0.72,
+  },
+  secondaryActionButtonLabel: {
+    fontWeight: "600",
   },
   errorText: {
     fontSize: 14,

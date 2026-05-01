@@ -1,224 +1,444 @@
-import * as AppleAuthentication from "expo-apple-authentication";
 import {
   createContext,
-  PropsWithChildren,
+  type PropsWithChildren,
   useCallback,
   useContext,
   useEffect,
   useState,
 } from "react";
-import { type Session } from "@supabase/supabase-js";
-import { Platform } from "react-native";
 
+import { getBackendConfigurationError } from "@/lib/backend";
 import {
+  clearAllStoredData,
   clearGuestIntakeProfile,
+  clearPendingSignupEmail,
+  clearStoredAuthTokenPair,
   readGuestIntakeProfile,
+  readPendingSignupEmail,
+  readStoredAuthTokenPair,
   readUserIntakeProfile,
   writeGuestIntakeProfile,
+  writePendingSignupEmail,
+  writeStoredAuthTokenPair,
   writeUserIntakeProfile,
 } from "@/lib/storage";
 import {
-  getBypassProfile,
-  getSupabaseClient,
-  getSupabaseConfigurationError,
-  isAuthBypassEnabled,
-  mapUserToProfile,
-} from "@/lib/supabase";
+  type AuthTokenPair,
+  type BackendUser,
+  type LoginRequestPayload,
+  type LogoutRequestPayload,
+  type MessageResponsePayload,
+  type SendSignupCodeRequestPayload,
+  type SignupRequestPayload,
+  type SignupResponsePayload,
+  type TokenPairResponsePayload,
+  type VerifySignupCodeRequestPayload,
+} from "@/types/auth";
 import { type UserIntakeProfile, type UserProfile } from "@/types/domain";
 
+const AUTH_BYPASS_ENABLED = false;
+const BYPASS_PROFILE: UserProfile = {
+  email: "demo@pyhsiotrack.local",
+  fullName: "Demo Patient",
+  id: "demo-user",
+  isActive: true,
+  isEmailVerified: true,
+  isStaff: false,
+};
+
+type AppSession = {
+  tokenPair: AuthTokenPair;
+  user: BackendUser;
+};
+
+type ApiRouteRequestMethod = "GET" | "POST";
+
+type ApiRouteRequestParams = {
+  accessToken: string | null;
+  body: unknown | null;
+  method: ApiRouteRequestMethod;
+  path: string;
+};
+
 type SessionContextValue = {
-  isAppleAuthAvailable: boolean;
-  currentUserId: string | null;
   configurationError: string | null;
+  currentUserId: string | null;
+  hasCompletedGuestOnboarding: boolean;
+  intakeProfile: UserIntakeProfile | null;
+  isAppleAuthAvailable: boolean;
   isLoading: boolean;
   isOnboardingComplete: boolean;
-  hasCompletedGuestOnboarding: boolean;
   isTestingBypassEnabled: boolean;
-  intakeProfile: UserIntakeProfile | null;
+  pendingSignupEmail: string | null;
   profile: UserProfile | null;
   saveIntakeProfile: (intakeProfile: UserIntakeProfile) => Promise<void>;
-  session: Session | null;
-  signInWithApple: () => Promise<void>;
+  session: AppSession | null;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (fullName: string, email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  resendSignupCode: () => Promise<void>;
+  verifySignupCode: (code: string) => Promise<void>;
 };
+
+class ApiRouteRequestError extends Error {
+  path: string;
+  responseBody: string | null;
+  status: number | null;
+
+  constructor(message: string, status: number | null, path: string, responseBody: string | null) {
+    super(message);
+    this.name = "ApiRouteRequestError";
+    this.status = status;
+    this.path = path;
+    this.responseBody = responseBody;
+  }
+}
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
+function isAuthBypassEnabled() {
+  const rawValue = process.env.EXPO_PUBLIC_AUTH_BYPASS;
+
+  if (typeof rawValue !== "string") {
+    return AUTH_BYPASS_ENABLED;
+  }
+
+  return rawValue === "true";
+}
+
 function buildMissingConfigurationError(action: string) {
-  return `${action} is unavailable. ${getSupabaseConfigurationError()}`;
+  return `${action} is unavailable. ${getBackendConfigurationError()}`;
 }
 
-function buildAppleFullName(fullName: AppleAuthentication.AppleAuthenticationFullName | null) {
-  if (fullName === null) {
-    return null;
+function buildApiRouteHeaders(accessToken: string | null, hasBody: boolean) {
+  const headers = new Headers({
+    Accept: "application/json",
+  });
+
+  if (hasBody) {
+    headers.set("content-type", "application/json");
   }
 
-  const formattedName = [
-    fullName.givenName,
-    fullName.middleName,
-    fullName.familyName,
-  ]
-    .filter((namePart): namePart is string => {
-      return typeof namePart === "string" && namePart.trim().length > 0;
-    })
-    .join(" ")
-    .trim();
-
-  if (formattedName.length === 0) {
-    return null;
+  if (accessToken !== null) {
+    headers.set("authorization", `Bearer ${accessToken}`);
   }
 
-  return formattedName;
+  return headers;
 }
 
-function createAppleNonce() {
-  if (typeof globalThis.crypto?.randomUUID !== "function") {
-    throw new Error(
-      "Apple Sign-In requires secure nonce generation, but crypto.randomUUID is unavailable on this device.",
+function parseJsonResponse<TResponse>(responseText: string, path: string, status: number) {
+  try {
+    return JSON.parse(responseText) as TResponse;
+  } catch (error) {
+    throw new ApiRouteRequestError(
+      `API route response for "${path}" was not valid JSON: ${
+        error instanceof Error ? error.message : "Unknown parsing error."
+      }`,
+      status,
+      path,
+      responseText,
+    );
+  }
+}
+
+async function performApiRouteRequest<TResponse>(params: ApiRouteRequestParams) {
+  const hasBody = params.body !== null;
+  const response = await fetch(params.path, {
+    body: hasBody ? JSON.stringify(params.body) : undefined,
+    headers: buildApiRouteHeaders(params.accessToken, hasBody),
+    method: params.method,
+  });
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    throw new ApiRouteRequestError(
+      `API route request failed for "${params.path}" with status ${response.status}.`,
+      response.status,
+      params.path,
+      responseText,
     );
   }
 
-  return globalThis.crypto.randomUUID();
+  return parseJsonResponse<TResponse>(responseText, params.path, response.status);
+}
+
+function isUnauthorizedApiRouteError(error: unknown) {
+  return error instanceof ApiRouteRequestError && error.status === 401;
+}
+
+function mapBackendUserToProfile(user: BackendUser) {
+  return {
+    email: user.email,
+    fullName: user.profile?.full_name ?? null,
+    id: user.id,
+    isActive: user.is_active,
+    isEmailVerified: user.is_email_verified,
+    isStaff: user.is_staff,
+  } satisfies UserProfile;
+}
+
+function mapBackendUserToIntakeProfile(user: BackendUser) {
+  if (user.profile === null) {
+    return null;
+  }
+
+  return {
+    ageRange: user.profile.age_range,
+    dailyStepGoal: user.profile.daily_step_goal,
+    focusArea: user.profile.focus_area,
+    fullName: user.profile.full_name,
+    weeklyGoal: user.profile.weekly_goal,
+  } satisfies UserIntakeProfile;
+}
+
+function buildSignupRequestPayload(params: {
+  email: string;
+  fullName: string;
+  intakeProfile: UserIntakeProfile;
+  password: string;
+}) {
+  return {
+    age_range: params.intakeProfile.ageRange,
+    daily_step_goal: params.intakeProfile.dailyStepGoal,
+    email: params.email,
+    focus_area: params.intakeProfile.focusArea,
+    full_name: params.fullName,
+    password: params.password,
+    weekly_goal: params.intakeProfile.weeklyGoal,
+  } satisfies SignupRequestPayload;
+}
+
+async function loginWithApiRoute(payload: LoginRequestPayload) {
+  return performApiRouteRequest<TokenPairResponsePayload>({
+    accessToken: null,
+    body: payload,
+    method: "POST",
+    path: "/api/auth/login",
+  });
+}
+
+async function signupWithApiRoute(payload: SignupRequestPayload) {
+  return performApiRouteRequest<SignupResponsePayload>({
+    accessToken: null,
+    body: payload,
+    method: "POST",
+    path: "/api/auth/signup",
+  });
+}
+
+async function verifySignupCodeWithApiRoute(payload: VerifySignupCodeRequestPayload) {
+  return performApiRouteRequest<TokenPairResponsePayload>({
+    accessToken: null,
+    body: payload,
+    method: "POST",
+    path: "/api/auth/verify-signup-code",
+  });
+}
+
+async function resendSignupCodeWithApiRoute(payload: SendSignupCodeRequestPayload) {
+  return performApiRouteRequest<MessageResponsePayload>({
+    accessToken: null,
+    body: payload,
+    method: "POST",
+    path: "/api/auth/send-signup-code",
+  });
+}
+
+async function refreshTokenPairWithApiRoute(tokenPair: AuthTokenPair) {
+  return performApiRouteRequest<AuthTokenPair>({
+    accessToken: null,
+    body: {
+      refresh: tokenPair.refresh,
+    },
+    method: "POST",
+    path: "/api/auth/token/refresh",
+  });
+}
+
+async function logoutWithApiRoute(params: { accessToken: string; payload: LogoutRequestPayload }) {
+  return performApiRouteRequest<MessageResponsePayload>({
+    accessToken: params.accessToken,
+    body: params.payload,
+    method: "POST",
+    path: "/api/auth/logout",
+  });
+}
+
+async function fetchCurrentUserWithApiRoute(accessToken: string) {
+  return performApiRouteRequest<BackendUser>({
+    accessToken,
+    body: null,
+    method: "GET",
+    path: "/api/auth/me",
+  });
 }
 
 export function SessionProvider(props: PropsWithChildren) {
   const isTestingBypassEnabled = isAuthBypassEnabled();
-  const configurationError = getSupabaseConfigurationError();
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const configurationError = getBackendConfigurationError();
+  const [hasCompletedGuestOnboarding, setHasCompletedGuestOnboarding] = useState(false);
   const [intakeProfile, setIntakeProfile] = useState<UserIntakeProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasCompletedGuestOnboarding, setHasCompletedGuestOnboarding] = useState(false);
-  const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
+  const [pendingSignupEmail, setPendingSignupEmail] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<AppSession | null>(null);
 
-  const applySessionState = useCallback(
-    async (nextSession: Session | null) => {
-      setSession(nextSession);
-      setProfile(mapUserToProfile(nextSession?.user ?? null));
+  const applySignedOutState = useCallback(async () => {
+    const guestProfile = await readGuestIntakeProfile();
+    const storedPendingSignupEmail = await readPendingSignupEmail();
+    setHasCompletedGuestOnboarding(guestProfile !== null);
+    setIntakeProfile(guestProfile);
+    setPendingSignupEmail(storedPendingSignupEmail);
+    setProfile(null);
+    setSession(null);
+  }, []);
 
-      if (nextSession?.user.id !== undefined) {
-        let storedIntakeProfile = await readUserIntakeProfile(nextSession.user.id);
+  const applyAuthenticatedState = useCallback(async (
+    tokenPair: AuthTokenPair,
+    user: BackendUser,
+  ) => {
+    const guestProfile = await readGuestIntakeProfile();
+    const backendIntakeProfile = mapBackendUserToIntakeProfile(user);
+    const storedIntakeProfile = await readUserIntakeProfile(user.id);
+    const resolvedIntakeProfile =
+      backendIntakeProfile ?? storedIntakeProfile ?? guestProfile;
 
-        const guestProfile = await readGuestIntakeProfile();
-        if (guestProfile !== null) {
-          await writeUserIntakeProfile(nextSession.user.id, guestProfile);
-          storedIntakeProfile = guestProfile;
-          await clearGuestIntakeProfile();
-          setHasCompletedGuestOnboarding(false);
-        }
+    if (resolvedIntakeProfile !== null) {
+      await writeUserIntakeProfile(user.id, resolvedIntakeProfile);
+    }
 
-        setIntakeProfile(storedIntakeProfile);
-        return;
+    if (guestProfile !== null) {
+      await clearGuestIntakeProfile();
+    }
+
+    setHasCompletedGuestOnboarding(false);
+    setIntakeProfile(resolvedIntakeProfile);
+    setPendingSignupEmail(null);
+    setProfile(mapBackendUserToProfile(user));
+    setSession({
+      tokenPair,
+      user,
+    });
+  }, []);
+
+  const restoreAuthenticatedState = useCallback(async (tokenPair: AuthTokenPair) => {
+    try {
+      const user = await fetchCurrentUserWithApiRoute(tokenPair.access);
+      await applyAuthenticatedState(tokenPair, user);
+      return;
+    } catch (error) {
+      if (!isUnauthorizedApiRouteError(error)) {
+        throw error;
       }
+    }
 
-      setIntakeProfile(null);
-    },
-    [],
-  );
+    const refreshedTokenPair = await refreshTokenPairWithApiRoute(tokenPair);
+    await writeStoredAuthTokenPair(refreshedTokenPair);
+    const user = await fetchCurrentUserWithApiRoute(refreshedTokenPair.access);
+    await applyAuthenticatedState(refreshedTokenPair, user);
+  }, [applyAuthenticatedState]);
 
   useEffect(() => {
-    if (isTestingBypassEnabled) {
-      const bypassProfile = getBypassProfile();
-      setSession(null);
-      setProfile(bypassProfile);
-      void readUserIntakeProfile(bypassProfile.id)
-        .then((storedIntakeProfile) => {
-          setIntakeProfile(storedIntakeProfile);
-        })
-        .finally(() => {
-          setIsAppleAuthAvailable(false);
-          setIsLoading(false);
-        });
-      return;
-    }
-
     let isActive = true;
 
-    const loadAppleAvailability = async () => {
-      if (Platform.OS !== "ios") {
+    const initializeSession = async () => {
+      if (isTestingBypassEnabled) {
+        const guestProfile = await readGuestIntakeProfile();
+        const storedIntakeProfile = await readUserIntakeProfile(BYPASS_PROFILE.id);
+        const storedPendingSignupEmail = await readPendingSignupEmail();
+
+        if (!isActive) {
+          return;
+        }
+
+        setHasCompletedGuestOnboarding(guestProfile !== null);
+        setIntakeProfile(storedIntakeProfile ?? guestProfile);
+        setPendingSignupEmail(storedPendingSignupEmail);
+        setProfile(BYPASS_PROFILE);
+        setSession(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const guestProfile = await readGuestIntakeProfile();
+      const storedPendingSignupEmail = await readPendingSignupEmail();
+
+      if (isActive) {
+        setHasCompletedGuestOnboarding(guestProfile !== null);
+        setPendingSignupEmail(storedPendingSignupEmail);
+      }
+
+      if (configurationError !== null) {
         if (isActive) {
-          setIsAppleAuthAvailable(false);
+          setIsLoading(false);
         }
         return;
       }
 
-      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      const storedTokenPair = await readStoredAuthTokenPair();
 
-      if (isActive) {
-        setIsAppleAuthAvailable(isAvailable);
-      }
-    };
-
-    void loadAppleAvailability();
-
-    if (configurationError !== null) {
-      setIsLoading(false);
-      return () => {
-        isActive = false;
-      };
-    }
-
-    const client = getSupabaseClient();
-
-    const initializeSession = async () => {
-      const guestProfile = await readGuestIntakeProfile();
-      if (guestProfile !== null) {
-        setHasCompletedGuestOnboarding(true);
+      if (storedTokenPair === null) {
+        if (isActive) {
+          setProfile(null);
+          setSession(null);
+          setIntakeProfile(guestProfile);
+          setIsLoading(false);
+        }
+        return;
       }
 
-      const { data, error } = await client.auth.getSession();
+      try {
+        await restoreAuthenticatedState(storedTokenPair);
+      } catch (error) {
+        await clearStoredAuthTokenPair();
+        await applySignedOutState();
 
-      if (error !== null) {
-        throw new Error(`Supabase session restore failed: ${error.message}`);
-      }
-
-      await applySessionState(data.session);
-
-      if (isActive) {
-        setIsLoading(false);
+        if (error instanceof ApiRouteRequestError) {
+          console.warn("Stored session restore failed", {
+            path: error.path,
+            responseBody: error.responseBody,
+            status: error.status,
+          });
+        } else {
+          console.warn("Stored session restore failed", {
+            error,
+          });
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
       }
     };
 
     void initializeSession();
 
-    const { data } = client.auth.onAuthStateChange((_event, nextSession) => {
-      void applySessionState(nextSession).finally(() => {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      });
-    });
-
-    const revokeSubscription =
-      Platform.OS === "ios"
-        ? AppleAuthentication.addRevokeListener(() => {
-            void client.auth.signOut();
-          })
-        : null;
-
     return () => {
       isActive = false;
-      data.subscription.unsubscribe();
-      revokeSubscription?.remove();
     };
-  }, [applySessionState, configurationError, isTestingBypassEnabled]);
+  }, [
+    applySignedOutState,
+    configurationError,
+    isTestingBypassEnabled,
+    restoreAuthenticatedState,
+  ]);
 
-  const saveIntakeProfile = async (nextIntakeProfile: UserIntakeProfile) => {
-    const userId = profile?.id;
+  const saveIntakeProfile = useCallback(async (nextIntakeProfile: UserIntakeProfile) => {
+    const userId = profile?.id ?? null;
 
-    if (userId === undefined) {
+    if (userId === null) {
       await writeGuestIntakeProfile(nextIntakeProfile);
       setHasCompletedGuestOnboarding(true);
+      setIntakeProfile(nextIntakeProfile);
       return;
     }
 
     await writeUserIntakeProfile(userId, nextIntakeProfile);
     setIntakeProfile(nextIntakeProfile);
-  };
+  }, [profile?.id]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     if (isTestingBypassEnabled) {
       return;
     }
@@ -227,17 +447,21 @@ export function SessionProvider(props: PropsWithChildren) {
       throw new Error(buildMissingConfigurationError("Sign in"));
     }
 
-    const { error } = await getSupabaseClient().auth.signInWithPassword({
+    const response = await loginWithApiRoute({
       email,
       password,
     });
+    const tokenPair = {
+      access: response.access,
+      refresh: response.refresh,
+    } satisfies AuthTokenPair;
 
-    if (error !== null) {
-      throw new Error(`Supabase sign-in failed for "${email}": ${error.message}`);
-    }
-  };
+    await writeStoredAuthTokenPair(tokenPair);
+    await clearPendingSignupEmail();
+    await applyAuthenticatedState(tokenPair, response.user);
+  }, [applyAuthenticatedState, configurationError, isTestingBypassEnabled]);
 
-  const signUp = async (fullName: string, email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string) => {
     if (isTestingBypassEnabled) {
       return;
     }
@@ -246,24 +470,90 @@ export function SessionProvider(props: PropsWithChildren) {
       throw new Error(buildMissingConfigurationError("Sign up"));
     }
 
-    const { error } = await getSupabaseClient().auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          fullName,
-          full_name: fullName,
-        },
-      },
-    });
+    const guestIntakeProfile = await readGuestIntakeProfile();
 
-    if (error !== null) {
-      throw new Error(`Supabase sign-up failed for "${email}": ${error.message}`);
+    if (guestIntakeProfile === null) {
+      throw new Error(
+        "Complete onboarding before creating an account so we can include your intake profile.",
+      );
     }
-  };
 
-  const signOut = async () => {
+    const fullName = guestIntakeProfile.fullName.trim();
+
+    if (fullName.length === 0) {
+      throw new Error(
+        "Complete onboarding before creating an account so we can include your full name.",
+      );
+    }
+
+    await signupWithApiRoute(
+      buildSignupRequestPayload({
+        email,
+        fullName,
+        intakeProfile: guestIntakeProfile,
+        password,
+      }),
+    );
+    await writePendingSignupEmail(email);
+    setPendingSignupEmail(email);
+  }, [configurationError, isTestingBypassEnabled]);
+
+  const verifySignupCode = useCallback(async (code: string) => {
     if (isTestingBypassEnabled) {
+      return;
+    }
+
+    if (configurationError !== null) {
+      throw new Error(buildMissingConfigurationError("Email verification"));
+    }
+
+    const email = pendingSignupEmail ?? (await readPendingSignupEmail());
+
+    if (email === null) {
+      throw new Error("No pending signup email exists for verification.");
+    }
+
+    const response = await verifySignupCodeWithApiRoute({
+      code,
+      email,
+    });
+    const tokenPair = {
+      access: response.access,
+      refresh: response.refresh,
+    } satisfies AuthTokenPair;
+
+    await writeStoredAuthTokenPair(tokenPair);
+    await clearPendingSignupEmail();
+    await applyAuthenticatedState(tokenPair, response.user);
+  }, [applyAuthenticatedState, configurationError, isTestingBypassEnabled, pendingSignupEmail]);
+
+  const resendSignupCode = useCallback(async () => {
+    if (isTestingBypassEnabled) {
+      return;
+    }
+
+    if (configurationError !== null) {
+      throw new Error(buildMissingConfigurationError("Resend verification code"));
+    }
+
+    const email = pendingSignupEmail ?? (await readPendingSignupEmail());
+
+    if (email === null) {
+      throw new Error("No pending signup email exists for resending a verification code.");
+    }
+
+    await resendSignupCodeWithApiRoute({
+      email,
+    });
+  }, [configurationError, isTestingBypassEnabled, pendingSignupEmail]);
+
+  const signOut = useCallback(async () => {
+    if (isTestingBypassEnabled) {
+      setHasCompletedGuestOnboarding(true);
+      setIntakeProfile(null);
+      setPendingSignupEmail(null);
+      setProfile(null);
+      setSession(null);
       return;
     }
 
@@ -271,87 +561,57 @@ export function SessionProvider(props: PropsWithChildren) {
       throw new Error(buildMissingConfigurationError("Sign out"));
     }
 
-    const { error } = await getSupabaseClient().auth.signOut();
+    const storedTokenPair = await readStoredAuthTokenPair();
 
-    if (error !== null) {
-      throw new Error(`Supabase sign-out failed: ${error.message}`);
-    }
-  };
-
-  const signInWithApple = async () => {
-    if (isTestingBypassEnabled) {
+    if (storedTokenPair === null) {
+      await clearAllStoredData();
+      setHasCompletedGuestOnboarding(true);
+      setIntakeProfile(null);
+      setPendingSignupEmail(null);
+      setProfile(null);
+      setSession(null);
       return;
     }
 
-    if (configurationError !== null) {
-      throw new Error(buildMissingConfigurationError("Apple Sign-In"));
-    }
-
-    if (Platform.OS !== "ios") {
-      throw new Error("Apple Sign-In is currently available on iOS only in this app.");
-    }
-
-    const rawNonce = createAppleNonce();
-    const credential = await AppleAuthentication.signInAsync({
-      nonce: rawNonce,
-      requestedScopes: [
-        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-        AppleAuthentication.AppleAuthenticationScope.EMAIL,
-      ],
+    await logoutWithApiRoute({
+      accessToken: storedTokenPair.access,
+      payload: {
+        refresh: storedTokenPair.refresh,
+      },
     });
+    await clearAllStoredData();
+    setHasCompletedGuestOnboarding(true);
+    setIntakeProfile(null);
+    setPendingSignupEmail(null);
+    setProfile(null);
+    setSession(null);
+  }, [configurationError, isTestingBypassEnabled]);
 
-    if (credential.identityToken === null) {
-      throw new Error("Apple Sign-In completed without an identity token.");
-    }
-
-    const client = getSupabaseClient();
-    const { error } = await client.auth.signInWithIdToken({
-      provider: "apple",
-      token: credential.identityToken,
-      access_token: credential.authorizationCode ?? undefined,
-      nonce: rawNonce,
-    });
-
-    if (error !== null) {
-      throw new Error(`Supabase Apple sign-in failed: ${error.message}`);
-    }
-
-    const formattedFullName = buildAppleFullName(credential.fullName);
-
-    if (formattedFullName !== null) {
-      const { error: updateUserError } = await client.auth.updateUser({
-        data: {
-          fullName: formattedFullName,
-          full_name: formattedFullName,
-        },
-      });
-
-      if (updateUserError !== null) {
-        throw new Error(
-          `Apple Sign-In succeeded, but saving the user name failed: ${updateUserError.message}`,
-        );
-      }
-    }
-  };
+  const signInWithApple = useCallback(async () => {
+    throw new Error("Apple Sign-In is unavailable until it is wired to your backend API routes.");
+  }, []);
 
   return (
     <SessionContext.Provider
       value={{
-        currentUserId: profile?.id ?? null,
         configurationError,
-        isAppleAuthAvailable,
+        currentUserId: profile?.id ?? null,
+        hasCompletedGuestOnboarding,
+        intakeProfile,
+        isAppleAuthAvailable: false,
         isLoading,
         isOnboardingComplete: intakeProfile !== null,
-        hasCompletedGuestOnboarding,
         isTestingBypassEnabled,
-        intakeProfile,
+        pendingSignupEmail,
         profile,
         saveIntakeProfile,
         session,
-        signInWithApple,
         signIn,
+        signInWithApple,
         signOut,
         signUp,
+        resendSignupCode,
+        verifySignupCode,
       }}
     >
       {props.children}

@@ -13,7 +13,13 @@ function NavigationGate() {
   const router = useRouter();
   const segments = useSegments();
   const { colors, isDark } = useAppTheme();
-  const { currentUserId, isLoading, isOnboardingComplete, hasCompletedGuestOnboarding } = useSession();
+  const {
+    currentUserId,
+    hasCompletedGuestOnboarding,
+    isLoading,
+    isOnboardingComplete,
+    pendingSignupEmail,
+  } = useSession();
 
   const topSegment = segments[0];
 
@@ -25,12 +31,17 @@ function NavigationGate() {
     const isOnboardingRoute = topSegment === "onboarding";
     const isExerciseRoute = topSegment === "exercise";
     const isSessionRoute = topSegment === "session";
+    const authSubRoute = segments[1];
+    const isLoginRoute = isAuthRoute && authSubRoute === "login";
+    const isVerifyEmailRoute = isAuthRoute && authSubRoute === "verify-email";
 
     const isProtectedAppRoute = isTabRoute || isExerciseRoute || isSessionRoute;
 
     if (currentUserId === null) {
-      if (!hasCompletedGuestOnboarding && !isOnboardingRoute) {
+      if (!hasCompletedGuestOnboarding && !isOnboardingRoute && !isLoginRoute) {
         router.replace("/onboarding");
+      } else if (isVerifyEmailRoute && pendingSignupEmail === null) {
+        router.replace("/(auth)/signup");
       } else if (hasCompletedGuestOnboarding && !isAuthRoute) {
         router.replace("/(auth)/welcome");
       }
@@ -61,6 +72,8 @@ function NavigationGate() {
     isOnboardingComplete,
     hasCompletedGuestOnboarding,
     router,
+    pendingSignupEmail,
+    segments,
     topSegment,
   ]);
 

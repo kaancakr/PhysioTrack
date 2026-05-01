@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,22 +15,57 @@ import { Feather } from "@expo/vector-icons";
 
 import { AppButton } from "@/components/app-button";
 import { AppCard } from "@/components/app-card";
+import { ConfigNotice } from "@/components/config-notice";
+import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
 
 export default function VerifyEmailScreen() {
   const { colors } = useAppTheme();
   const router = useRouter();
+  const { t } = useTranslation();
+  const {
+    configurationError,
+    pendingSignupEmail,
+    resendSignupCode,
+    verifySignupCode,
+  } = useSession();
   const [code, setCode] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   const handleVerify = async () => {
-    setIsSubmitting(true);
-    // Simulate verification
-    setTimeout(() => {
+    try {
+      setFormError(null);
+      setSuccessMessage(null);
+      setIsSubmitting(true);
+      await verifySignupCode(code);
+      setSuccessMessage(t("auth.verifyEmail.verifiedSuccess"));
       setIsSubmitting(false);
-      // @ts-ignore - Route types might not be updated yet in development
       router.replace("/(tabs)/dashboard");
-    }, 1500);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("auth.errors.unknownVerify");
+      setFormError(message);
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      setFormError(null);
+      setSuccessMessage(null);
+      setIsResending(true);
+      await resendSignupCode();
+      setSuccessMessage(t("auth.verifyEmail.resendSuccess"));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("auth.errors.unknownResend");
+      setFormError(message);
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -43,14 +79,22 @@ export default function VerifyEmailScreen() {
             <View style={[styles.iconContainer, { backgroundColor: colors.accent + "15" }]}>
               <Feather name="mail" size={32} color={colors.accent} />
             </View>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Email Doğrulama</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {t("auth.verifyEmail.title")}
+            </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Lütfen e-posta adresinize gönderilen 6 haneli doğrulama kodunu girin.
+              {t("auth.verifyEmail.subtitle")}
             </Text>
           </View>
 
           <AppCard>
             <View style={styles.form}>
+              <ConfigNotice message={configurationError} />
+              {pendingSignupEmail !== null ? (
+                <Text style={[styles.emailText, { color: colors.textSecondary }]}>
+                  {t("auth.verifyEmail.codeSentTo", { email: pendingSignupEmail })}
+                </Text>
+              ) : null}
               <View style={styles.codeInputContainer}>
                 {[0, 1, 2, 3, 4, 5].map((index) => (
                   <View
@@ -77,16 +121,33 @@ export default function VerifyEmailScreen() {
                   value={code}
                 />
               </View>
+              {formError !== null ? (
+                <Text style={[styles.feedbackText, { color: colors.danger }]}>{formError}</Text>
+              ) : null}
+              {successMessage !== null ? (
+                <Text style={[styles.feedbackText, { color: colors.success }]}>
+                  {successMessage}
+                </Text>
+              ) : null}
 
               <AppButton
                 disabled={code.length < 6 || isSubmitting}
-                label={isSubmitting ? "Doğrulanıyor..." : "Doğrula"}
+                label={
+                  isSubmitting
+                    ? t("auth.verifyEmail.verifyingLabel")
+                    : t("auth.verifyEmail.verifyLabel")
+                }
                 onPress={handleVerify}
               />
 
               <AppButton
-                label="Kodu tekrar gönder"
-                onPress={() => {}}
+                disabled={isResending}
+                label={
+                  isResending
+                    ? t("auth.verifyEmail.sendingLabel")
+                    : t("auth.verifyEmail.resendLabel")
+                }
+                onPress={handleResend}
                 variant="secondary"
               />
             </View>
@@ -96,7 +157,7 @@ export default function VerifyEmailScreen() {
             onPress={() => router.back()}
             style={[styles.footerLink, { color: colors.accent }]}
           >
-            E-posta adresini değiştir
+            {t("auth.verifyEmail.changeEmail")}
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -147,6 +208,11 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: 8,
   },
+  emailText: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
   codeInputContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -164,6 +230,12 @@ const styles = StyleSheet.create({
   codeText: {
     fontSize: 24,
     fontWeight: "800",
+  },
+  feedbackText: {
+    fontSize: 14,
+    fontWeight: "600",
+    lineHeight: 20,
+    textAlign: "center",
   },
   hiddenInput: {
     position: "absolute",

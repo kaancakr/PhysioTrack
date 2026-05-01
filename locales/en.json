@@ -1,21 +1,36 @@
 {
   "welcome": {
     "eyebrow": "HOME PHYSIOTHERAPY AND MENTAL BALANCE",
-    "title": "Hello PhysioTrack!",
+    "title": "Welcome to PhysioTrack!",
     "subtitle": "Combine physical therapy exercises with the peace of meditation using PhysioTrack. Feel stronger at every step with personalized programs.",
     "createAccount": "Create Account",
     "alreadyHaveAccount": "Already Have an Account"
   },
   "onboarding": {
-    "introTitle": "Welcome PhysioTrack",
+    "introTitle": "Welcome to PhysioTrack",
     "introSubtitle": "Discover personalized physical therapy and meditation routines for a healthier you.",
+    "introBadge": "Personalized recovery plan",
+    "introFloatingLeft": "Daily progress",
+    "introFloatingRight": "Smart routine",
+    "introBenefitSetup": "2 min setup",
+    "introBenefitGuided": "Guided safely",
     "introStart": "Start",
-    "eyebrow": "Set up your plan",
-    "title": "Let's tailor your recovery dashboard.",
-    "subtitle": "We'll use a few details to shape your goals, focus area, and daily tracking.",
+    "defaults": {
+      "fullName": "Patient"
+    },
+    "progress": {
+      "aboutTitle": "About you",
+      "aboutDesc": "Tell us who this plan is for and we will personalize the experience from the first screen.",
+      "focusTitle": "Focus area",
+      "focusDesc": "Choose where you want the most support so your exercise program feels immediately relevant.",
+      "goalsTitle": "Goals",
+      "goalsDesc": "Pick a routine that feels achievable and keeps your recovery momentum visible every day."
+    },
     "step1": {
       "title": "About you",
       "text": "Share the basics so your home plan feels personal from the start.",
+      "ageTitle": "Choose your age range",
+      "ageText": "This helps us present a plan that feels better matched to your pace and comfort level.",
       "fullNameLabel": "Full name",
       "fullNamePlaceholder": "Jamie Patient"
     },
@@ -26,13 +41,19 @@
     "step3": {
       "title": "Set your weekly rhythm",
       "text": "These goals power the bars and circles on your dashboard.",
-      "dailyStepGoalLabel": "Daily step goal"
+      "weeklyTitle": "How often do you want to move?",
+      "weeklyText": "Pick a weekly pace that feels realistic enough to stay consistent.",
+      "weeklyCardHint": "A clear recovery rhythm",
+      "dailyStepGoalLabel": "Daily step goal",
+      "stepsText": "A daily walking target helps you keep progress visible beyond the exercise sessions.",
+      "stepsCardHint": "Gentle daily momentum"
     },
     "buttons": {
       "back": "Back",
       "continue": "Continue",
       "finish": "Finish setup"
     },
+    "footerHint": "You can update these preferences later from your profile.",
     "options": {
       "focus": {
         "neck": { "label": "Neck", "desc": "Desk strain and stiffness" },
@@ -46,6 +67,56 @@
         "4": "4 sessions",
         "5": "5 sessions"
       }
+    }
+  }
+  ,
+  "auth": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "patient@example.com",
+      "passwordLabel": "Password"
+    },
+    "errors": {
+      "unknownSignIn": "An unknown sign-in error occurred.",
+      "unknownSignUp": "An unknown sign-up error occurred.",
+      "unknownVerify": "An unknown verification error occurred.",
+      "unknownResend": "An unknown resend error occurred."
+    },
+    "login": {
+      "eyebrow": "Daily recovery",
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue your guided exercises, restore your routine, and keep your recovery streak moving.",
+      "featureQuickAccess": "Quick access",
+      "featureSavedProgress": "Saved progress",
+      "passwordPlaceholder": "Enter your password",
+      "submitLabel": "Sign in",
+      "submittingLabel": "Signing in...",
+      "footerPrefix": "New to PhysioTrack?",
+      "footerLink": "Create an account"
+    },
+    "signup": {
+      "eyebrow": "Guided recovery",
+      "title": "Create your account",
+      "subtitle": "Your onboarding profile is ready. Add your account details to save your plan and continue with email verification.",
+      "featureProfileReady": "Profile ready",
+      "featureEmailVerification": "Email verification",
+      "passwordPlaceholder": "Create a secure password",
+      "submitLabel": "Create account",
+      "submittingLabel": "Creating account...",
+      "footerPrefix": "Already have an account?",
+      "footerLink": "Sign in"
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "subtitle": "Enter the 6-digit verification code sent to your email address.",
+      "codeSentTo": "Code sent to {{email}}",
+      "verifyLabel": "Verify",
+      "verifyingLabel": "Verifying...",
+      "resendLabel": "Resend code",
+      "sendingLabel": "Sending...",
+      "verifiedSuccess": "Your email has been verified.",
+      "resendSuccess": "A new verification code has been sent.",
+      "changeEmail": "Change email address"
     }
   }
 }
