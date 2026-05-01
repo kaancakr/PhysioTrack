@@ -1,44 +1,44 @@
 import {
-  createContext,
-  type PropsWithChildren,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    type PropsWithChildren,
+    useCallback,
+    useContext,
+    useEffect,
+    useState,
 } from "react";
 
 import { getBackendConfigurationError } from "@/lib/backend";
 import {
-  clearAllStoredData,
-  clearGuestIntakeProfile,
-  clearPendingSignupEmail,
-  clearStoredAuthTokenPair,
-  readGuestIntakeProfile,
-  readPendingSignupEmail,
-  readStoredAuthTokenPair,
-  readUserIntakeProfile,
-  writeGuestIntakeProfile,
-  writePendingSignupEmail,
-  writeStoredAuthTokenPair,
-  writeUserIntakeProfile,
+    clearAllStoredData,
+    clearGuestIntakeProfile,
+    clearPendingSignupEmail,
+    clearStoredAuthTokenPair,
+    readGuestIntakeProfile,
+    readPendingSignupEmail,
+    readStoredAuthTokenPair,
+    readUserIntakeProfile,
+    writeGuestIntakeProfile,
+    writePendingSignupEmail,
+    writeStoredAuthTokenPair,
+    writeUserIntakeProfile,
 } from "@/lib/storage";
 import {
-  type AuthTokenPair,
-  type BackendUser,
-  type LoginRequestPayload,
-  type LogoutRequestPayload,
-  type MessageResponsePayload,
-  type SendSignupCodeRequestPayload,
-  type SignupRequestPayload,
-  type SignupResponsePayload,
-  type TokenPairResponsePayload,
-  type VerifySignupCodeRequestPayload,
+    type AuthTokenPair,
+    type BackendUser,
+    type LoginRequestPayload,
+    type LogoutRequestPayload,
+    type MessageResponsePayload,
+    type SendSignupCodeRequestPayload,
+    type SignupRequestPayload,
+    type SignupResponsePayload,
+    type TokenPairResponsePayload,
+    type VerifySignupCodeRequestPayload,
 } from "@/types/auth";
 import { type UserIntakeProfile, type UserProfile } from "@/types/domain";
 
 const AUTH_BYPASS_ENABLED = false;
 const BYPASS_PROFILE: UserProfile = {
-  email: "demo@pyhsiotrack.local",
+  email: "demo@physiotrack.local",
   fullName: "Demo Patient",
   id: "demo-user",
   isActive: true,
@@ -86,7 +86,12 @@ class ApiRouteRequestError extends Error {
   responseBody: string | null;
   status: number | null;
 
-  constructor(message: string, status: number | null, path: string, responseBody: string | null) {
+  constructor(
+    message: string,
+    status: number | null,
+    path: string,
+    responseBody: string | null,
+  ) {
     super(message);
     this.name = "ApiRouteRequestError";
     this.status = status;
@@ -127,7 +132,11 @@ function buildApiRouteHeaders(accessToken: string | null, hasBody: boolean) {
   return headers;
 }
 
-function parseJsonResponse<TResponse>(responseText: string, path: string, status: number) {
+function parseJsonResponse<TResponse>(
+  responseText: string,
+  path: string,
+  status: number,
+) {
   try {
     return JSON.parse(responseText) as TResponse;
   } catch (error) {
@@ -142,7 +151,9 @@ function parseJsonResponse<TResponse>(responseText: string, path: string, status
   }
 }
 
-async function performApiRouteRequest<TResponse>(params: ApiRouteRequestParams) {
+async function performApiRouteRequest<TResponse>(
+  params: ApiRouteRequestParams,
+) {
   const hasBody = params.body !== null;
   const response = await fetch(params.path, {
     body: hasBody ? JSON.stringify(params.body) : undefined,
@@ -160,7 +171,11 @@ async function performApiRouteRequest<TResponse>(params: ApiRouteRequestParams) 
     );
   }
 
-  return parseJsonResponse<TResponse>(responseText, params.path, response.status);
+  return parseJsonResponse<TResponse>(
+    responseText,
+    params.path,
+    response.status,
+  );
 }
 
 function isUnauthorizedApiRouteError(error: unknown) {
@@ -227,7 +242,9 @@ async function signupWithApiRoute(payload: SignupRequestPayload) {
   });
 }
 
-async function verifySignupCodeWithApiRoute(payload: VerifySignupCodeRequestPayload) {
+async function verifySignupCodeWithApiRoute(
+  payload: VerifySignupCodeRequestPayload,
+) {
   return performApiRouteRequest<TokenPairResponsePayload>({
     accessToken: null,
     body: payload,
@@ -236,7 +253,9 @@ async function verifySignupCodeWithApiRoute(payload: VerifySignupCodeRequestPayl
   });
 }
 
-async function resendSignupCodeWithApiRoute(payload: SendSignupCodeRequestPayload) {
+async function resendSignupCodeWithApiRoute(
+  payload: SendSignupCodeRequestPayload,
+) {
   return performApiRouteRequest<MessageResponsePayload>({
     accessToken: null,
     body: payload,
@@ -256,7 +275,10 @@ async function refreshTokenPairWithApiRoute(tokenPair: AuthTokenPair) {
   });
 }
 
-async function logoutWithApiRoute(params: { accessToken: string; payload: LogoutRequestPayload }) {
+async function logoutWithApiRoute(params: {
+  accessToken: string;
+  payload: LogoutRequestPayload;
+}) {
   return performApiRouteRequest<MessageResponsePayload>({
     accessToken: params.accessToken,
     body: params.payload,
@@ -277,10 +299,15 @@ async function fetchCurrentUserWithApiRoute(accessToken: string) {
 export function SessionProvider(props: PropsWithChildren) {
   const isTestingBypassEnabled = isAuthBypassEnabled();
   const configurationError = getBackendConfigurationError();
-  const [hasCompletedGuestOnboarding, setHasCompletedGuestOnboarding] = useState(false);
-  const [intakeProfile, setIntakeProfile] = useState<UserIntakeProfile | null>(null);
+  const [hasCompletedGuestOnboarding, setHasCompletedGuestOnboarding] =
+    useState(false);
+  const [intakeProfile, setIntakeProfile] = useState<UserIntakeProfile | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
-  const [pendingSignupEmail, setPendingSignupEmail] = useState<string | null>(null);
+  const [pendingSignupEmail, setPendingSignupEmail] = useState<string | null>(
+    null,
+  );
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<AppSession | null>(null);
 
@@ -294,50 +321,55 @@ export function SessionProvider(props: PropsWithChildren) {
     setSession(null);
   }, []);
 
-  const applyAuthenticatedState = useCallback(async (
-    tokenPair: AuthTokenPair,
-    user: BackendUser,
-  ) => {
-    const guestProfile = await readGuestIntakeProfile();
-    const backendIntakeProfile = mapBackendUserToIntakeProfile(user);
-    const storedIntakeProfile = await readUserIntakeProfile(user.id);
-    const resolvedIntakeProfile =
-      backendIntakeProfile ?? storedIntakeProfile ?? guestProfile;
+  const applyAuthenticatedState = useCallback(
+    async (tokenPair: AuthTokenPair, user: BackendUser) => {
+      const guestProfile = await readGuestIntakeProfile();
+      const backendIntakeProfile = mapBackendUserToIntakeProfile(user);
+      const storedIntakeProfile = await readUserIntakeProfile(user.id);
+      const resolvedIntakeProfile =
+        backendIntakeProfile ?? storedIntakeProfile ?? guestProfile;
 
-    if (resolvedIntakeProfile !== null) {
-      await writeUserIntakeProfile(user.id, resolvedIntakeProfile);
-    }
-
-    if (guestProfile !== null) {
-      await clearGuestIntakeProfile();
-    }
-
-    setHasCompletedGuestOnboarding(false);
-    setIntakeProfile(resolvedIntakeProfile);
-    setPendingSignupEmail(null);
-    setProfile(mapBackendUserToProfile(user));
-    setSession({
-      tokenPair,
-      user,
-    });
-  }, []);
-
-  const restoreAuthenticatedState = useCallback(async (tokenPair: AuthTokenPair) => {
-    try {
-      const user = await fetchCurrentUserWithApiRoute(tokenPair.access);
-      await applyAuthenticatedState(tokenPair, user);
-      return;
-    } catch (error) {
-      if (!isUnauthorizedApiRouteError(error)) {
-        throw error;
+      if (resolvedIntakeProfile !== null) {
+        await writeUserIntakeProfile(user.id, resolvedIntakeProfile);
       }
-    }
 
-    const refreshedTokenPair = await refreshTokenPairWithApiRoute(tokenPair);
-    await writeStoredAuthTokenPair(refreshedTokenPair);
-    const user = await fetchCurrentUserWithApiRoute(refreshedTokenPair.access);
-    await applyAuthenticatedState(refreshedTokenPair, user);
-  }, [applyAuthenticatedState]);
+      if (guestProfile !== null) {
+        await clearGuestIntakeProfile();
+      }
+
+      setHasCompletedGuestOnboarding(false);
+      setIntakeProfile(resolvedIntakeProfile);
+      setPendingSignupEmail(null);
+      setProfile(mapBackendUserToProfile(user));
+      setSession({
+        tokenPair,
+        user,
+      });
+    },
+    [],
+  );
+
+  const restoreAuthenticatedState = useCallback(
+    async (tokenPair: AuthTokenPair) => {
+      try {
+        const user = await fetchCurrentUserWithApiRoute(tokenPair.access);
+        await applyAuthenticatedState(tokenPair, user);
+        return;
+      } catch (error) {
+        if (!isUnauthorizedApiRouteError(error)) {
+          throw error;
+        }
+      }
+
+      const refreshedTokenPair = await refreshTokenPairWithApiRoute(tokenPair);
+      await writeStoredAuthTokenPair(refreshedTokenPair);
+      const user = await fetchCurrentUserWithApiRoute(
+        refreshedTokenPair.access,
+      );
+      await applyAuthenticatedState(refreshedTokenPair, user);
+    },
+    [applyAuthenticatedState],
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -345,7 +377,9 @@ export function SessionProvider(props: PropsWithChildren) {
     const initializeSession = async () => {
       if (isTestingBypassEnabled) {
         const guestProfile = await readGuestIntakeProfile();
-        const storedIntakeProfile = await readUserIntakeProfile(BYPASS_PROFILE.id);
+        const storedIntakeProfile = await readUserIntakeProfile(
+          BYPASS_PROFILE.id,
+        );
         const storedPendingSignupEmail = await readPendingSignupEmail();
 
         if (!isActive) {
@@ -424,108 +458,125 @@ export function SessionProvider(props: PropsWithChildren) {
     restoreAuthenticatedState,
   ]);
 
-  const saveIntakeProfile = useCallback(async (nextIntakeProfile: UserIntakeProfile) => {
-    const userId = profile?.id ?? null;
+  const saveIntakeProfile = useCallback(
+    async (nextIntakeProfile: UserIntakeProfile) => {
+      const userId = profile?.id ?? null;
 
-    if (userId === null) {
-      await writeGuestIntakeProfile(nextIntakeProfile);
-      setHasCompletedGuestOnboarding(true);
+      if (userId === null) {
+        await writeGuestIntakeProfile(nextIntakeProfile);
+        setHasCompletedGuestOnboarding(true);
+        setIntakeProfile(nextIntakeProfile);
+        return;
+      }
+
+      await writeUserIntakeProfile(userId, nextIntakeProfile);
       setIntakeProfile(nextIntakeProfile);
-      return;
-    }
+    },
+    [profile?.id],
+  );
 
-    await writeUserIntakeProfile(userId, nextIntakeProfile);
-    setIntakeProfile(nextIntakeProfile);
-  }, [profile?.id]);
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      if (isTestingBypassEnabled) {
+        return;
+      }
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    if (isTestingBypassEnabled) {
-      return;
-    }
+      if (configurationError !== null) {
+        throw new Error(buildMissingConfigurationError("Sign in"));
+      }
 
-    if (configurationError !== null) {
-      throw new Error(buildMissingConfigurationError("Sign in"));
-    }
-
-    const response = await loginWithApiRoute({
-      email,
-      password,
-    });
-    const tokenPair = {
-      access: response.access,
-      refresh: response.refresh,
-    } satisfies AuthTokenPair;
-
-    await writeStoredAuthTokenPair(tokenPair);
-    await clearPendingSignupEmail();
-    await applyAuthenticatedState(tokenPair, response.user);
-  }, [applyAuthenticatedState, configurationError, isTestingBypassEnabled]);
-
-  const signUp = useCallback(async (email: string, password: string) => {
-    if (isTestingBypassEnabled) {
-      return;
-    }
-
-    if (configurationError !== null) {
-      throw new Error(buildMissingConfigurationError("Sign up"));
-    }
-
-    const guestIntakeProfile = await readGuestIntakeProfile();
-
-    if (guestIntakeProfile === null) {
-      throw new Error(
-        "Complete onboarding before creating an account so we can include your intake profile.",
-      );
-    }
-
-    const fullName = guestIntakeProfile.fullName.trim();
-
-    if (fullName.length === 0) {
-      throw new Error(
-        "Complete onboarding before creating an account so we can include your full name.",
-      );
-    }
-
-    await signupWithApiRoute(
-      buildSignupRequestPayload({
+      const response = await loginWithApiRoute({
         email,
-        fullName,
-        intakeProfile: guestIntakeProfile,
         password,
-      }),
-    );
-    await writePendingSignupEmail(email);
-    setPendingSignupEmail(email);
-  }, [configurationError, isTestingBypassEnabled]);
+      });
+      const tokenPair = {
+        access: response.access,
+        refresh: response.refresh,
+      } satisfies AuthTokenPair;
 
-  const verifySignupCode = useCallback(async (code: string) => {
-    if (isTestingBypassEnabled) {
-      return;
-    }
+      await writeStoredAuthTokenPair(tokenPair);
+      await clearPendingSignupEmail();
+      await applyAuthenticatedState(tokenPair, response.user);
+    },
+    [applyAuthenticatedState, configurationError, isTestingBypassEnabled],
+  );
 
-    if (configurationError !== null) {
-      throw new Error(buildMissingConfigurationError("Email verification"));
-    }
+  const signUp = useCallback(
+    async (email: string, password: string) => {
+      if (isTestingBypassEnabled) {
+        return;
+      }
 
-    const email = pendingSignupEmail ?? (await readPendingSignupEmail());
+      if (configurationError !== null) {
+        throw new Error(buildMissingConfigurationError("Sign up"));
+      }
 
-    if (email === null) {
-      throw new Error("No pending signup email exists for verification.");
-    }
+      const guestIntakeProfile = await readGuestIntakeProfile();
 
-    const response = await verifySignupCodeWithApiRoute({
-      code,
-      email,
-    });
-    const tokenPair = {
-      access: response.access,
-      refresh: response.refresh,
-    } satisfies AuthTokenPair;
+      if (guestIntakeProfile === null) {
+        throw new Error(
+          "Complete onboarding before creating an account so we can include your intake profile.",
+        );
+      }
 
-    await writeStoredAuthTokenPair(tokenPair);
-    await clearPendingSignupEmail();
-    await applyAuthenticatedState(tokenPair, response.user);
-  }, [applyAuthenticatedState, configurationError, isTestingBypassEnabled, pendingSignupEmail]);
+      const fullName = guestIntakeProfile.fullName.trim();
+
+      if (fullName.length === 0) {
+        throw new Error(
+          "Complete onboarding before creating an account so we can include your full name.",
+        );
+      }
+
+      await signupWithApiRoute(
+        buildSignupRequestPayload({
+          email,
+          fullName,
+          intakeProfile: guestIntakeProfile,
+          password,
+        }),
+      );
+      await writePendingSignupEmail(email);
+      setPendingSignupEmail(email);
+    },
+    [configurationError, isTestingBypassEnabled],
+  );
+
+  const verifySignupCode = useCallback(
+    async (code: string) => {
+      if (isTestingBypassEnabled) {
+        return;
+      }
+
+      if (configurationError !== null) {
+        throw new Error(buildMissingConfigurationError("Email verification"));
+      }
+
+      const email = pendingSignupEmail ?? (await readPendingSignupEmail());
+
+      if (email === null) {
+        throw new Error("No pending signup email exists for verification.");
+      }
+
+      const response = await verifySignupCodeWithApiRoute({
+        code,
+        email,
+      });
+      const tokenPair = {
+        access: response.access,
+        refresh: response.refresh,
+      } satisfies AuthTokenPair;
+
+      await writeStoredAuthTokenPair(tokenPair);
+      await clearPendingSignupEmail();
+      await applyAuthenticatedState(tokenPair, response.user);
+    },
+    [
+      applyAuthenticatedState,
+      configurationError,
+      isTestingBypassEnabled,
+      pendingSignupEmail,
+    ],
+  );
 
   const resendSignupCode = useCallback(async () => {
     if (isTestingBypassEnabled) {
@@ -533,13 +584,17 @@ export function SessionProvider(props: PropsWithChildren) {
     }
 
     if (configurationError !== null) {
-      throw new Error(buildMissingConfigurationError("Resend verification code"));
+      throw new Error(
+        buildMissingConfigurationError("Resend verification code"),
+      );
     }
 
     const email = pendingSignupEmail ?? (await readPendingSignupEmail());
 
     if (email === null) {
-      throw new Error("No pending signup email exists for resending a verification code.");
+      throw new Error(
+        "No pending signup email exists for resending a verification code.",
+      );
     }
 
     await resendSignupCodeWithApiRoute({
@@ -588,7 +643,9 @@ export function SessionProvider(props: PropsWithChildren) {
   }, [configurationError, isTestingBypassEnabled]);
 
   const signInWithApple = useCallback(async () => {
-    throw new Error("Apple Sign-In is unavailable until it is wired to your backend API routes.");
+    throw new Error(
+      "Apple Sign-In is unavailable until it is wired to your backend API routes.",
+    );
   }, []);
 
   return (

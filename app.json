@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "PyhsioTrack",
-    "slug": "PyhsioTrack",
+    "name": "PhysioTrack",
+    "slug": "PhysioTrack",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "pyhsiotrack",
+    "scheme": "physiotrack",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
-      "bundleIdentifier": "com.ckrdevelopment.PyhsioTrack"
+      "bundleIdentifier": "com.ckrdevelopment.PhysioTrack"
     },
     "android": {
       "adaptiveIcon": {
