@@ -1,6 +1,7 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Link } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -11,6 +12,7 @@ import { useAppTheme } from "@/providers/theme-provider";
 export default function WelcomeScreen() {
   const { colors } = useAppTheme();
   const [appleAuthError, setAppleAuthError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   return (
     <SafeAreaView
@@ -23,14 +25,13 @@ export default function WelcomeScreen() {
       >
         <View style={styles.hero}>
           <Text style={[styles.eyebrow, { color: colors.accent }]}>
-            EVDE FİZYOTERAPİ VE ZİHİNSEL DENGE
+            {t("welcome.eyebrow")}
           </Text>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Merhaba PhysioTrack!
+            {t("welcome.title")}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            PhysioTrack ile fizik tedavi egzersizlerini
-            meditasyon huzuruyla birleştirin. Size özel programlarla her adımda daha güçlü hissedin.
+            {t("welcome.subtitle")}
           </Text>
         </View>
 
@@ -51,10 +52,10 @@ export default function WelcomeScreen() {
             </Text>
           ) : null}
           <Link asChild href="/(auth)/signup">
-            <AppButton label="Hesap Oluşturun" />
+            <AppButton label={t("welcome.createAccount")} />
           </Link>
           <Link asChild href="/(auth)/login">
-            <AppButton label="Zaten Hesabınız Var" variant="secondary" />
+            <AppButton label={t("welcome.alreadyHaveAccount")} variant="secondary" />
           </Link>
         </View>
       </ScrollView>
