@@ -21,8 +21,10 @@
     "progress": {
       "aboutTitle": "Senin hakkında",
       "aboutDesc": "Bu planın kimin için olduğunu söyle, deneyimi ilk ekrandan itibaren kişiselleştirelim.",
+      "genderTitle": "Cinsiyet",
+      "genderDesc": "Ağrı bölgesini seçmeden önce backend'e gönderilecek cinsiyet tercihini profiline ekleyelim.",
       "focusTitle": "Odak alanı",
-      "focusDesc": "En çok destek istediğin bölgeyi seç, egzersiz programın ilk andan itibaren daha ilgili olsun.",
+      "focusDesc": "Ön ve arka görünüm arasında geçiş yap, sonra en çok destek istediğin bölgeye dokun.",
       "goalsTitle": "Hedefler",
       "goalsDesc": "Sürdürülebilir bir tempo seçerek iyileşme ivmeni her gün görünür kıl."
     },
@@ -35,10 +37,20 @@
       "fullNamePlaceholder": "Ahmet Yılmaz"
     },
     "step2": {
-      "title": "Odak noktanızı seçin",
-      "text": "Sizin için en uygun egzersiz programını ana ekranınızın en üstüne getireceğiz."
+      "title": "Cinsiyetinizi seçin",
+      "text": "Bu tercihi backend'e gönderilecek intake profilinize dahil edeceğiz."
     },
     "step3": {
+      "title": "Odak bölgenizi seçin",
+      "text": "Önce en çok destek istediğiniz bölgeyi vücut haritası üzerinden seçin.",
+      "bodyHint": "Odaklanmak istediğiniz bölgeyi vurgulamak için sağdaki alan kartlarından birini seçin.",
+      "selectedArea": "Seçilen bölge: {{area}}",
+      "bodyView": {
+        "front": "Ön",
+        "back": "Arka"
+      }
+    },
+    "step4": {
       "title": "Haftalık ritminizi belirleyin",
       "text": "Bu hedefler, panonuzdaki ilerleme çubuklarına ve halkalarına güç verir.",
       "weeklyTitle": "Haftada ne kadar hareket etmek istersiniz?",
@@ -55,6 +67,11 @@
     },
     "footerHint": "Bu tercihleri daha sonra profil sayfasından güncelleyebilirsin.",
     "options": {
+      "gender": {
+        "male": "Erkek",
+        "female": "Kadın",
+        "prefer_not_to_say": "Belirtmek istemiyorum"
+      },
       "focus": {
         "neck": {
           "label": "Boyun",
@@ -65,7 +82,11 @@
           "label": "Sırt / Bel",
           "desc": "Destek ve hareket rahatlığı"
         },
-        "knee": { "label": "Diz", "desc": "Güç ve güven" }
+        "knee": { "label": "Diz", "desc": "Güç ve güven" },
+        "mobility": {
+          "label": "Mobilite",
+          "desc": "Genel hareket ve tüm vücut esnekliği"
+        }
       },
       "weekly": {
         "2": "2 seans",

@@ -1,15 +1,5 @@
-const BACKEND_URL_ENV_KEY = "BACKEND_URL";
+import { getBackendBaseUrl } from "@/lib/backend";
 const RETRY_ATTEMPTS = 3;
-
-function getBackendBaseUrl() {
-  const rawValue = process.env.BACKEND_URL;
-
-  if (typeof rawValue !== "string" || rawValue.trim().length === 0) {
-    throw new Error(`Set ${BACKEND_URL_ENV_KEY} before calling auth me API route.`);
-  }
-
-  return rawValue.trim().replace(/\/+$/, "");
-}
 
 export async function GET(request: Request) {
   const authorizationHeader = request.headers.get("authorization");
@@ -33,7 +23,8 @@ export async function GET(request: Request) {
 
       return new Response(responseText, {
         headers: {
-          "Content-Type": response.headers.get("content-type") ?? "application/json",
+          "Content-Type":
+            response.headers.get("content-type") ?? "application/json",
         },
         status: response.status,
       });

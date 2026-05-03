@@ -21,8 +21,10 @@
     "progress": {
       "aboutTitle": "About you",
       "aboutDesc": "Tell us who this plan is for and we will personalize the experience from the first screen.",
+      "genderTitle": "Gender",
+      "genderDesc": "Save the gender preference you want included in your intake profile before choosing the body area.",
       "focusTitle": "Focus area",
-      "focusDesc": "Choose where you want the most support so your exercise program feels immediately relevant.",
+      "focusDesc": "Slide between the front and back body views, then tap the area where you want the most support.",
       "goalsTitle": "Goals",
       "goalsDesc": "Pick a routine that feels achievable and keeps your recovery momentum visible every day."
     },
@@ -35,10 +37,20 @@
       "fullNamePlaceholder": "Jamie Patient"
     },
     "step2": {
-      "title": "Choose your focus",
-      "text": "We'll bring the most relevant exercise program to the top of your home screen."
+      "title": "Choose your gender",
+      "text": "We will include this preference in your intake profile when it is sent to the backend."
     },
     "step3": {
+      "title": "Choose your focus area",
+      "text": "Use the body map to tell us where you want the most support first.",
+      "bodyHint": "Choose one of the area cards on the right to highlight the part of the body you want to focus on.",
+      "selectedArea": "Selected area: {{area}}",
+      "bodyView": {
+        "front": "Front",
+        "back": "Back"
+      }
+    },
+    "step4": {
       "title": "Set your weekly rhythm",
       "text": "These goals power the bars and circles on your dashboard.",
       "weeklyTitle": "How often do you want to move?",
@@ -55,11 +67,20 @@
     },
     "footerHint": "You can update these preferences later from your profile.",
     "options": {
+      "gender": {
+        "male": "Male",
+        "female": "Female",
+        "prefer_not_to_say": "Prefer not to say"
+      },
       "focus": {
         "neck": { "label": "Neck", "desc": "Desk strain and stiffness" },
         "shoulder": { "label": "Shoulder", "desc": "Mobility and control" },
         "back": { "label": "Back", "desc": "Support and movement comfort" },
-        "knee": { "label": "Knee", "desc": "Strength and confidence" }
+        "knee": { "label": "Knee", "desc": "Strength and confidence" },
+        "mobility": {
+          "label": "Mobility",
+          "desc": "General movement and full-body flexibility"
+        }
       },
       "weekly": {
         "2": "2 sessions",

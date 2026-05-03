@@ -1,4 +1,8 @@
-import { type FocusArea, type UserIntakeProfile, type WeeklyGoal } from "@/types/domain";
+import {
+  type FocusArea,
+  type UserIntakeProfile,
+  type WeeklyGoal,
+} from "@/types/domain";
 
 export type AuthTokenPair = {
   access: string;
@@ -10,6 +14,7 @@ export type BackendUserProfile = {
   daily_step_goal: UserIntakeProfile["dailyStepGoal"];
   focus_area: FocusArea;
   full_name: string;
+  gender: UserIntakeProfile["gender"];
   metadata: Record<string, unknown> | null;
   weekly_goal: WeeklyGoal;
 };
@@ -29,6 +34,7 @@ export type SignupRequestPayload = {
   email: string;
   focus_area: FocusArea;
   full_name: string;
+  gender: UserIntakeProfile["gender"];
   password: string;
   weekly_goal: WeeklyGoal;
 };

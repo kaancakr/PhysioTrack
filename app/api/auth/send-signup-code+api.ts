@@ -1,17 +1,5 @@
-const BACKEND_URL_ENV_KEY = "BACKEND_URL";
+import { getBackendBaseUrl } from "@/lib/backend";
 const RETRY_ATTEMPTS = 3;
-
-function getBackendBaseUrl() {
-  const rawValue = process.env.BACKEND_URL;
-
-  if (typeof rawValue !== "string" || rawValue.trim().length === 0) {
-    throw new Error(
-      `Set ${BACKEND_URL_ENV_KEY} before calling auth send signup code API route.`,
-    );
-  }
-
-  return rawValue.trim().replace(/\/+$/, "");
-}
 
 export async function POST(request: Request) {
   const authorizationHeader = request.headers.get("authorization");
@@ -33,16 +21,20 @@ export async function POST(request: Request) {
         headers.set("authorization", authorizationHeader);
       }
 
-      const response = await fetch(`${getBackendBaseUrl()}/api/auth/send-signup-code`, {
-        body: requestBody,
-        headers,
-        method: "POST",
-      });
+      const response = await fetch(
+        `${getBackendBaseUrl()}/api/auth/send-signup-code`,
+        {
+          body: requestBody,
+          headers,
+          method: "POST",
+        },
+      );
       const responseText = await response.text();
 
       return new Response(responseText, {
         headers: {
-          "Content-Type": response.headers.get("content-type") ?? "application/json",
+          "Content-Type":
+            response.headers.get("content-type") ?? "application/json",
         },
         status: response.status,
       });
@@ -60,5 +52,7 @@ export async function POST(request: Request) {
 
   throw lastError instanceof Error
     ? lastError
-    : new Error('Backend auth send signup code request failed for path "/api/auth/send-signup-code".');
+    : new Error(
+        'Backend auth send signup code request failed for path "/api/auth/send-signup-code".',
+      );
 }

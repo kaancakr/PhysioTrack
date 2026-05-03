@@ -36,12 +36,14 @@ export type UserProfile = {
 };
 
 export type WeeklyGoal = 2 | 3 | 4 | 5;
+export type Gender = "male" | "female" | "prefer_not_to_say";
 
 export type UserIntakeProfile = {
   ageRange: "18-29" | "30-44" | "45-59" | "60+";
   dailyStepGoal: 3000 | 5000 | 7000 | 9000;
   focusArea: FocusArea;
   fullName: string;
+  gender: Gender;
   weeklyGoal: WeeklyGoal;
 };
 

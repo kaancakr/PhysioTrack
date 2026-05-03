@@ -3,6 +3,7 @@ import * as SecureStore from "expo-secure-store";
 
 import { type AuthTokenPair } from "@/types/auth";
 import {
+    type Gender,
     type PersistedProgressState,
     type ThemePreference,
     type UserIntakeProfile,
@@ -55,6 +56,39 @@ function validateAuthTokenPair(value: unknown) {
     access,
     refresh,
   } satisfies AuthTokenPair;
+}
+
+function normalizeStoredGender(value: unknown): Gender {
+  if (
+    value === "male" ||
+    value === "female" ||
+    value === "prefer_not_to_say"
+  ) {
+    return value;
+  }
+
+  return "prefer_not_to_say";
+}
+
+function normalizeStoredUserIntakeProfile(
+  value: unknown,
+  storageKey: string,
+): UserIntakeProfile {
+  if (typeof value !== "object" || value === null) {
+    throw new Error(`Unexpected intake profile state for key "${storageKey}".`);
+  }
+
+  const intakeProfile = value as Partial<UserIntakeProfile>;
+
+  return {
+    ageRange: intakeProfile.ageRange as UserIntakeProfile["ageRange"],
+    dailyStepGoal:
+      intakeProfile.dailyStepGoal as UserIntakeProfile["dailyStepGoal"],
+    focusArea: intakeProfile.focusArea as UserIntakeProfile["focusArea"],
+    fullName: intakeProfile.fullName as string,
+    gender: normalizeStoredGender(intakeProfile.gender),
+    weeklyGoal: intakeProfile.weeklyGoal as UserIntakeProfile["weeklyGoal"],
+  };
 }
 
 export async function readThemePreference() {
@@ -121,12 +155,7 @@ export async function readUserIntakeProfile(userId: string) {
   }
 
   const parsedValue = parseStoredJson(storedValue, key);
-
-  if (typeof parsedValue !== "object" || parsedValue === null) {
-    throw new Error(`Unexpected user intake state for user "${userId}".`);
-  }
-
-  return parsedValue as UserIntakeProfile;
+  return normalizeStoredUserIntakeProfile(parsedValue, key);
 }
 
 export async function writeUserIntakeProfile(
@@ -147,12 +176,7 @@ export async function readGuestIntakeProfile() {
   }
 
   const parsedValue = parseStoredJson(storedValue, GUEST_INTAKE_KEY);
-
-  if (typeof parsedValue !== "object" || parsedValue === null) {
-    throw new Error("Unexpected guest intake state.");
-  }
-
-  return parsedValue as UserIntakeProfile;
+  return normalizeStoredUserIntakeProfile(parsedValue, GUEST_INTAKE_KEY);
 }
 
 export async function writeGuestIntakeProfile(

@@ -203,6 +203,7 @@ function mapBackendUserToIntakeProfile(user: BackendUser) {
     dailyStepGoal: user.profile.daily_step_goal,
     focusArea: user.profile.focus_area,
     fullName: user.profile.full_name,
+    gender: user.profile.gender,
     weeklyGoal: user.profile.weekly_goal,
   } satisfies UserIntakeProfile;
 }
@@ -219,6 +220,7 @@ function buildSignupRequestPayload(params: {
     email: params.email,
     focus_area: params.intakeProfile.focusArea,
     full_name: params.fullName,
+    gender: params.intakeProfile.gender,
     password: params.password,
     weekly_goal: params.intakeProfile.weeklyGoal,
   } satisfies SignupRequestPayload;
