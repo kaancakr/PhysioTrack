@@ -8,7 +8,7 @@ import {
   Text,
   TextInput,
   View,
-  useWindowDimensions
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -46,19 +46,20 @@ export default function ExercisesScreen() {
         });
 
         const headers: Record<string, string> = {
-          "Accept": "application/json",
+          Accept: "application/json",
         };
-
 
         if (session?.tokenPair?.access) {
           headers["Authorization"] = `Bearer ${session.tokenPair.access}`;
         }
 
-
-        const response = await fetch(`/api/programs/?${params.toString()}`, {
-          method: "GET",
-          headers,
-        });
+        const response = await fetch(
+          `/api/auth/programs/?${params.toString()}`,
+          {
+            method: "GET",
+            headers,
+          },
+        );
 
         if (!response.ok) {
           throw new Error(`API hatası: ${response.status}`);
@@ -80,16 +81,27 @@ export default function ExercisesScreen() {
   }, [query, focusFilter, session?.tokenPair?.access]); // Token değiştiğinde de tetiklenmeli
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+    >
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: metrics.horizontalPadding }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingHorizontal: metrics.horizontalPadding },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.content, { gap: metrics.sectionGap, maxWidth: metrics.contentMaxWidth }]}>
-
+        <View
+          style={[
+            styles.content,
+            { gap: metrics.sectionGap, maxWidth: metrics.contentMaxWidth },
+          ]}
+        >
           {/* Başlık Bölümü */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Exercise programs</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              Exercise programs
+            </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               No-equipment physiotherapy routines organized for home use.
             </Text>
@@ -124,12 +136,25 @@ export default function ExercisesScreen() {
                         style={[
                           styles.filterChip,
                           {
-                            backgroundColor: isSelected ? colors.accentSoft : colors.surfaceMuted,
-                            borderColor: isSelected ? colors.accent : colors.border,
+                            backgroundColor: isSelected
+                              ? colors.accentSoft
+                              : colors.surfaceMuted,
+                            borderColor: isSelected
+                              ? colors.accent
+                              : colors.border,
                           },
                         ]}
                       >
-                        <Text style={[styles.filterLabel, { color: isSelected ? colors.accent : colors.textSecondary }]}>
+                        <Text
+                          style={[
+                            styles.filterLabel,
+                            {
+                              color: isSelected
+                                ? colors.accent
+                                : colors.textSecondary,
+                            },
+                          ]}
+                        >
                           {filter.label}
                         </Text>
                       </Pressable>
@@ -143,7 +168,11 @@ export default function ExercisesScreen() {
           {/* Program Listesi */}
           <View style={styles.programList}>
             {isLoading ? (
-              <ActivityIndicator color={colors.accent} size="large" style={{ marginTop: 20 }} />
+              <ActivityIndicator
+                color={colors.accent}
+                size="large"
+                style={{ marginTop: 20 }}
+              />
             ) : (
               programs.map((program, index) => (
                 <Link
@@ -155,14 +184,21 @@ export default function ExercisesScreen() {
                     <AppCard>
                       <View style={styles.programCard}>
                         <ArtworkPanel
-                          illustration={program.cover_image || program.coverImage}
+                          illustration={
+                            program.cover_image || program.coverImage
+                          }
                           kicker={null}
                           subtitle={`${program.focus_area_label || program.focusAreaLabel || ""} • ${formatDuration(program.total_duration_sec || program.totalDurationSec || 0)} • ${program.steps?.length || 0} steps`}
                           title={program.title}
                           withoutCard
                         />
                         {program.description && (
-                          <Text style={[styles.programDescription, { color: colors.textSecondary }]}>
+                          <Text
+                            style={[
+                              styles.programDescription,
+                              { color: colors.textSecondary },
+                            ]}
+                          >
                             {program.description}
                           </Text>
                         )}
@@ -173,7 +209,13 @@ export default function ExercisesScreen() {
               ))
             )}
             {!isLoading && programs.length === 0 && (
-              <Text style={{ textAlign: "center", color: colors.textSecondary, marginTop: 20 }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: colors.textSecondary,
+                  marginTop: 20,
+                }}
+              >
                 No programs found.
               </Text>
             )}
@@ -192,9 +234,21 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: "800" },
   subtitle: { fontSize: 15, lineHeight: 22 },
   filterPanel: { width: "100%" },
-  searchInput: { borderRadius: 16, borderWidth: 1, fontSize: 15, minHeight: 54, paddingHorizontal: 16, paddingVertical: 14 },
+  searchInput: {
+    borderRadius: 16,
+    borderWidth: 1,
+    fontSize: 15,
+    minHeight: 54,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   filterRow: { flexDirection: "row", gap: 10 },
-  filterChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 10 },
+  filterChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
   filterLabel: { fontSize: 14, fontWeight: "700" },
   programList: { gap: 14 },
   programCard: { gap: 12, width: "100%" },
