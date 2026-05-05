@@ -74,16 +74,52 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="exercises"
+        name="programs/index"
         options={{
-          title: "Exercises",
+          title: "Programs",
           tabBarIcon: ({ color, size }) => (
             <Ionicons color={color} name="body" size={dp(width, size)} />
           ),
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="programs/[programId]/index"
+        options={{
+          href: null,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="programs/[programId]/exercises/[exerciseId]/index"
+        options={{
+          href: null,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="programs/[programId]/exercises/[exerciseId]/session"
+        options={{
+          href: null,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="programs/[programId]/exercises/[exerciseId]/completed"
+        options={{
+          href: null,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="profile/index"
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (

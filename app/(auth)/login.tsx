@@ -20,6 +20,7 @@ import { AppCard } from "@/components/app-card";
 import { AppTextField } from "@/components/app-text-field";
 import { AppleAuthButton } from "@/components/apple-auth-button";
 import { ConfigNotice } from "@/components/config-notice";
+import { getAuthErrorMessage } from "@/lib/auth";
 import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getScreenMetrics } from "@/theme/layout";
@@ -41,11 +42,7 @@ export default function LoginScreen() {
       setIsSubmitting(true);
       await signIn(email.trim(), password);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("auth.errors.unknownSignIn");
-      setFormError(message);
+      setFormError(getAuthErrorMessage(error, t("auth.errors.unknownSignIn")));
     } finally {
       setIsSubmitting(false);
     }

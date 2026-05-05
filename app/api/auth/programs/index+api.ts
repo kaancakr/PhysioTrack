@@ -5,6 +5,10 @@ const RETRY_ATTEMPTS = 3;
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const authorizationHeader = request.headers.get("authorization");
+  const ifNoneMatchHeader = request.headers.get("if-none-match");
+  const queryString = searchParams.toString();
+  const backendPath =
+    queryString.length > 0 ? `/api/programs/?${queryString}` : "/api/programs/";
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt += 1) {
@@ -17,36 +21,38 @@ export async function GET(request: Request) {
         headers.set("authorization", authorizationHeader);
       }
 
-      console.log(searchParams.toString());
+      if (ifNoneMatchHeader !== null) {
+        headers.set("if-none-match", ifNoneMatchHeader);
+      }
 
-      // Django backend'e parametrelerle birlikte istek atar
-      const response = await fetch(
-        `${getBackendBaseUrl()}/api/programs?${searchParams.toString()}`,
-        {
-          headers,
-          method: "GET",
-        },
-      );
-
+      const response = await fetch(`${getBackendBaseUrl()}${backendPath}`, {
+        headers,
+        method: "GET",
+      });
       const responseText = await response.text();
+      const responseHeaders = new Headers();
+      const contentTypeHeader = response.headers.get("content-type");
+      const etagHeader = response.headers.get("etag");
 
-      // Terminalde veriyi görmek için loglar
-      console.log("Gelen Veri Durumu:", response.status);
-      console.log("İçerik özeti:", responseText.substring(0, 100) + "...");
+      if (contentTypeHeader !== null) {
+        responseHeaders.set("Content-Type", contentTypeHeader);
+      }
 
-      return new Response(responseText, {
-        headers: {
-          "Content-Type":
-            response.headers.get("content-type") ?? "application/json",
-        },
+      if (etagHeader !== null) {
+        responseHeaders.set("ETag", etagHeader);
+      }
+
+      return new Response(response.status === 304 ? null : responseText, {
+        headers: responseHeaders,
         status: response.status,
       });
     } catch (error) {
       lastError = error;
+
       if (attempt < RETRY_ATTEMPTS) {
         console.warn("Backend programs list request retry", {
           attempt,
-          path: "/api/programs/",
+          path: backendPath,
         });
       }
     }
@@ -54,5 +60,7 @@ export async function GET(request: Request) {
 
   throw lastError instanceof Error
     ? lastError
-    : new Error('Backend programs request failed for path "/api/programs/".');
+    : new Error(
+        `Backend programs list request failed for path "${backendPath}".`,
+      );
 }

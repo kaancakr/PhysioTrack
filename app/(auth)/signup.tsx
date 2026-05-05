@@ -20,6 +20,7 @@ import { AppCard } from "@/components/app-card";
 import { AppTextField } from "@/components/app-text-field";
 import { AppleAuthButton } from "@/components/apple-auth-button";
 import { ConfigNotice } from "@/components/config-notice";
+import { getAuthErrorMessage } from "@/lib/auth";
 import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getScreenMetrics } from "@/theme/layout";
@@ -44,11 +45,7 @@ export default function SignupScreen() {
       await signUp(email.trim(), password);
       router.push("/(auth)/verify-email");
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("auth.errors.unknownSignUp");
-      setFormError(message);
+      setFormError(getAuthErrorMessage(error, t("auth.errors.unknownSignUp")));
     } finally {
       setIsSubmitting(false);
     }

@@ -1,38 +1,51 @@
 import {
-    createContext,
-    type PropsWithChildren,
-    useCallback,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 
+import {
+  AuthRequestError,
+  clearAuthTokenPair,
+  isUnauthenticatedRequestError,
+  registerAuthTokenRefreshHandler,
+  registerUnauthorizedHandler,
+  requestAuthJson,
+  setAuthTokenPair,
+  unregisterAuthTokenRefreshHandler,
+  unregisterUnauthorizedHandler,
+} from "@/lib/auth";
 import { getBackendConfigurationError } from "@/lib/backend";
 import {
-    clearAllStoredData,
-    clearGuestIntakeProfile,
-    clearPendingSignupEmail,
-    clearStoredAuthTokenPair,
-    readGuestIntakeProfile,
-    readPendingSignupEmail,
-    readStoredAuthTokenPair,
-    readUserIntakeProfile,
-    writeGuestIntakeProfile,
-    writePendingSignupEmail,
-    writeStoredAuthTokenPair,
-    writeUserIntakeProfile,
+  clearAllStoredData,
+  clearGuestIntakeProfile,
+  clearPendingSignupEmail,
+  clearStoredAuthTokenPair,
+  readGuestIntakeProfile,
+  readHasOpenedApp,
+  readPendingSignupEmail,
+  readStoredAuthTokenPair,
+  readUserIntakeProfile,
+  writeGuestIntakeProfile,
+  writeHasOpenedApp,
+  writePendingSignupEmail,
+  writeStoredAuthTokenPair,
+  writeUserIntakeProfile,
 } from "@/lib/storage";
 import {
-    type AuthTokenPair,
-    type BackendUser,
-    type LoginRequestPayload,
-    type LogoutRequestPayload,
-    type MessageResponsePayload,
-    type SendSignupCodeRequestPayload,
-    type SignupRequestPayload,
-    type SignupResponsePayload,
-    type TokenPairResponsePayload,
-    type VerifySignupCodeRequestPayload,
+  type AuthTokenPair,
+  type BackendUser,
+  type LoginRequestPayload,
+  type LogoutRequestPayload,
+  type MessageResponsePayload,
+  type SendSignupCodeRequestPayload,
+  type SignupRequestPayload,
+  type SignupResponsePayload,
+  type TokenPairResponsePayload,
+  type VerifySignupCodeRequestPayload,
 } from "@/types/auth";
 import { type UserIntakeProfile, type UserProfile } from "@/types/domain";
 
@@ -47,17 +60,7 @@ const BYPASS_PROFILE: UserProfile = {
 };
 
 type AppSession = {
-  tokenPair: AuthTokenPair;
   user: BackendUser;
-};
-
-type ApiRouteRequestMethod = "GET" | "POST";
-
-type ApiRouteRequestParams = {
-  accessToken: string | null;
-  body: unknown | null;
-  method: ApiRouteRequestMethod;
-  path: string;
 };
 
 type SessionContextValue = {
@@ -66,8 +69,10 @@ type SessionContextValue = {
   hasCompletedGuestOnboarding: boolean;
   intakeProfile: UserIntakeProfile | null;
   isAppleAuthAvailable: boolean;
+  isFirstAppLaunch: boolean;
   isLoading: boolean;
   isOnboardingComplete: boolean;
+  isReturningUserWelcomeRedirectEnabled: boolean;
   isTestingBypassEnabled: boolean;
   pendingSignupEmail: string | null;
   profile: UserProfile | null;
@@ -81,25 +86,6 @@ type SessionContextValue = {
   verifySignupCode: (code: string) => Promise<void>;
 };
 
-class ApiRouteRequestError extends Error {
-  path: string;
-  responseBody: string | null;
-  status: number | null;
-
-  constructor(
-    message: string,
-    status: number | null,
-    path: string,
-    responseBody: string | null,
-  ) {
-    super(message);
-    this.name = "ApiRouteRequestError";
-    this.status = status;
-    this.path = path;
-    this.responseBody = responseBody;
-  }
-}
-
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 function isAuthBypassEnabled() {
@@ -112,74 +98,18 @@ function isAuthBypassEnabled() {
   return rawValue === "true";
 }
 
+function readReturningUserWelcomeRedirectEnabled() {
+  const rawValue = process.env.EXPO_PUBLIC_RETURNING_USER_WELCOME_REDIRECT;
+
+  if (typeof rawValue !== "string") {
+    return false;
+  }
+
+  return rawValue === "true";
+}
+
 function buildMissingConfigurationError(action: string) {
   return `${action} is unavailable. ${getBackendConfigurationError()}`;
-}
-
-function buildApiRouteHeaders(accessToken: string | null, hasBody: boolean) {
-  const headers = new Headers({
-    Accept: "application/json",
-  });
-
-  if (hasBody) {
-    headers.set("content-type", "application/json");
-  }
-
-  if (accessToken !== null) {
-    headers.set("authorization", `Bearer ${accessToken}`);
-  }
-
-  return headers;
-}
-
-function parseJsonResponse<TResponse>(
-  responseText: string,
-  path: string,
-  status: number,
-) {
-  try {
-    return JSON.parse(responseText) as TResponse;
-  } catch (error) {
-    throw new ApiRouteRequestError(
-      `API route response for "${path}" was not valid JSON: ${
-        error instanceof Error ? error.message : "Unknown parsing error."
-      }`,
-      status,
-      path,
-      responseText,
-    );
-  }
-}
-
-async function performApiRouteRequest<TResponse>(
-  params: ApiRouteRequestParams,
-) {
-  const hasBody = params.body !== null;
-  const response = await fetch(params.path, {
-    body: hasBody ? JSON.stringify(params.body) : undefined,
-    headers: buildApiRouteHeaders(params.accessToken, hasBody),
-    method: params.method,
-  });
-  const responseText = await response.text();
-
-  if (!response.ok) {
-    throw new ApiRouteRequestError(
-      `API route request failed for "${params.path}" with status ${response.status}.`,
-      response.status,
-      params.path,
-      responseText,
-    );
-  }
-
-  return parseJsonResponse<TResponse>(
-    responseText,
-    params.path,
-    response.status,
-  );
-}
-
-function isUnauthorizedApiRouteError(error: unknown) {
-  return error instanceof ApiRouteRequestError && error.status === 401;
 }
 
 function mapBackendUserToProfile(user: BackendUser) {
@@ -226,86 +156,17 @@ function buildSignupRequestPayload(params: {
   } satisfies SignupRequestPayload;
 }
 
-async function loginWithApiRoute(payload: LoginRequestPayload) {
-  return performApiRouteRequest<TokenPairResponsePayload>({
-    accessToken: null,
-    body: payload,
-    method: "POST",
-    path: "/api/auth/login",
-  });
-}
-
-async function signupWithApiRoute(payload: SignupRequestPayload) {
-  return performApiRouteRequest<SignupResponsePayload>({
-    accessToken: null,
-    body: payload,
-    method: "POST",
-    path: "/api/auth/signup",
-  });
-}
-
-async function verifySignupCodeWithApiRoute(
-  payload: VerifySignupCodeRequestPayload,
-) {
-  return performApiRouteRequest<TokenPairResponsePayload>({
-    accessToken: null,
-    body: payload,
-    method: "POST",
-    path: "/api/auth/verify-signup-code",
-  });
-}
-
-async function resendSignupCodeWithApiRoute(
-  payload: SendSignupCodeRequestPayload,
-) {
-  return performApiRouteRequest<MessageResponsePayload>({
-    accessToken: null,
-    body: payload,
-    method: "POST",
-    path: "/api/auth/send-signup-code",
-  });
-}
-
-async function refreshTokenPairWithApiRoute(tokenPair: AuthTokenPair) {
-  return performApiRouteRequest<AuthTokenPair>({
-    accessToken: null,
-    body: {
-      refresh: tokenPair.refresh,
-    },
-    method: "POST",
-    path: "/api/auth/token/refresh",
-  });
-}
-
-async function logoutWithApiRoute(params: {
-  accessToken: string;
-  payload: LogoutRequestPayload;
-}) {
-  return performApiRouteRequest<MessageResponsePayload>({
-    accessToken: params.accessToken,
-    body: params.payload,
-    method: "POST",
-    path: "/api/auth/logout",
-  });
-}
-
-async function fetchCurrentUserWithApiRoute(accessToken: string) {
-  return performApiRouteRequest<BackendUser>({
-    accessToken,
-    body: null,
-    method: "GET",
-    path: "/api/auth/me",
-  });
-}
-
 export function SessionProvider(props: PropsWithChildren) {
   const isTestingBypassEnabled = isAuthBypassEnabled();
+  const isReturningUserWelcomeRedirectEnabled =
+    readReturningUserWelcomeRedirectEnabled();
   const configurationError = getBackendConfigurationError();
   const [hasCompletedGuestOnboarding, setHasCompletedGuestOnboarding] =
     useState(false);
   const [intakeProfile, setIntakeProfile] = useState<UserIntakeProfile | null>(
     null,
   );
+  const [isFirstAppLaunch, setIsFirstAppLaunch] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingSignupEmail, setPendingSignupEmail] = useState<string | null>(
     null,
@@ -316,6 +177,7 @@ export function SessionProvider(props: PropsWithChildren) {
   const applySignedOutState = useCallback(async () => {
     const guestProfile = await readGuestIntakeProfile();
     const storedPendingSignupEmail = await readPendingSignupEmail();
+    clearAuthTokenPair();
     setHasCompletedGuestOnboarding(guestProfile !== null);
     setIntakeProfile(guestProfile);
     setPendingSignupEmail(storedPendingSignupEmail);
@@ -325,6 +187,7 @@ export function SessionProvider(props: PropsWithChildren) {
 
   const applyAuthenticatedState = useCallback(
     async (tokenPair: AuthTokenPair, user: BackendUser) => {
+      setAuthTokenPair(tokenPair);
       const guestProfile = await readGuestIntakeProfile();
       const backendIntakeProfile = mapBackendUserToIntakeProfile(user);
       const storedIntakeProfile = await readUserIntakeProfile(user.id);
@@ -344,7 +207,6 @@ export function SessionProvider(props: PropsWithChildren) {
       setPendingSignupEmail(null);
       setProfile(mapBackendUserToProfile(user));
       setSession({
-        tokenPair,
         user,
       });
     },
@@ -353,22 +215,13 @@ export function SessionProvider(props: PropsWithChildren) {
 
   const restoreAuthenticatedState = useCallback(
     async (tokenPair: AuthTokenPair) => {
-      try {
-        const user = await fetchCurrentUserWithApiRoute(tokenPair.access);
-        await applyAuthenticatedState(tokenPair, user);
-        return;
-      } catch (error) {
-        if (!isUnauthorizedApiRouteError(error)) {
-          throw error;
-        }
-      }
+      setAuthTokenPair(tokenPair);
+      const user = await requestAuthJson<BackendUser>("/api/auth/me", {
+        method: "GET",
+      });
+      const resolvedTokenPair = (await readStoredAuthTokenPair()) ?? tokenPair;
 
-      const refreshedTokenPair = await refreshTokenPairWithApiRoute(tokenPair);
-      await writeStoredAuthTokenPair(refreshedTokenPair);
-      const user = await fetchCurrentUserWithApiRoute(
-        refreshedTokenPair.access,
-      );
-      await applyAuthenticatedState(refreshedTokenPair, user);
+      await applyAuthenticatedState(resolvedTokenPair, user);
     },
     [applyAuthenticatedState],
   );
@@ -377,7 +230,16 @@ export function SessionProvider(props: PropsWithChildren) {
     let isActive = true;
 
     const initializeSession = async () => {
+      const hasOpenedApp = await readHasOpenedApp();
+
+      if (isActive) {
+        setIsFirstAppLaunch(!hasOpenedApp);
+      }
+
+      await writeHasOpenedApp();
+
       if (isTestingBypassEnabled) {
+        clearAuthTokenPair();
         const guestProfile = await readGuestIntakeProfile();
         const storedIntakeProfile = await readUserIntakeProfile(
           BYPASS_PROFILE.id,
@@ -427,10 +289,20 @@ export function SessionProvider(props: PropsWithChildren) {
       try {
         await restoreAuthenticatedState(storedTokenPair);
       } catch (error) {
-        await clearStoredAuthTokenPair();
-        await applySignedOutState();
-
-        if (error instanceof ApiRouteRequestError) {
+        if (isUnauthenticatedRequestError(error)) {
+          await clearStoredAuthTokenPair();
+          await applySignedOutState();
+        } else {
+          const storedTokenPair = await readStoredAuthTokenPair();
+          if (storedTokenPair) {
+            // Offline profile yüklemesi yapabilirsin veya session'ı mevcut haliyle bırakabilirsin
+            console.warn(
+              "Could not reach server to verify session. Assuming offline mode.",
+              error,
+            );
+          }
+        }
+        if (error instanceof AuthRequestError) {
           console.warn("Stored session restore failed", {
             path: error.path,
             responseBody: error.responseBody,
@@ -477,6 +349,58 @@ export function SessionProvider(props: PropsWithChildren) {
     [profile?.id],
   );
 
+  const refreshAccessToken = useCallback(
+    async (expiredAccessToken: string | null) => {
+      if (expiredAccessToken === null) {
+        return null;
+      }
+
+      const storedTokenPair = await readStoredAuthTokenPair();
+
+      if (storedTokenPair === null) {
+        return null;
+      }
+
+      if (storedTokenPair.access !== expiredAccessToken) {
+        return storedTokenPair;
+      }
+
+      const refreshedTokenPair = await requestAuthJson<AuthTokenPair>(
+        "/api/auth/token/refresh",
+        {
+          authenticate: false,
+          handleUnauthorized: true,
+          body: JSON.stringify({
+            refresh: storedTokenPair.refresh,
+          } satisfies LogoutRequestPayload),
+          headers: {
+            "content-type": "application/json",
+          },
+          method: "POST",
+        },
+      );
+      await writeStoredAuthTokenPair(refreshedTokenPair);
+      setAuthTokenPair(refreshedTokenPair);
+      return refreshedTokenPair;
+    },
+    [],
+  );
+
+  const handleUnauthorized = useCallback(async () => {
+    await clearStoredAuthTokenPair();
+    await applySignedOutState();
+  }, [applySignedOutState]);
+
+  useEffect(() => {
+    registerAuthTokenRefreshHandler(refreshAccessToken);
+    registerUnauthorizedHandler(handleUnauthorized);
+
+    return () => {
+      unregisterAuthTokenRefreshHandler(refreshAccessToken);
+      unregisterUnauthorizedHandler(handleUnauthorized);
+    };
+  }, [handleUnauthorized, refreshAccessToken]);
+
   const signIn = useCallback(
     async (email: string, password: string) => {
       if (isTestingBypassEnabled) {
@@ -487,10 +411,20 @@ export function SessionProvider(props: PropsWithChildren) {
         throw new Error(buildMissingConfigurationError("Sign in"));
       }
 
-      const response = await loginWithApiRoute({
-        email,
-        password,
-      });
+      const response = await requestAuthJson<TokenPairResponsePayload>(
+        "/api/auth/login",
+        {
+          authenticate: false,
+          body: JSON.stringify({
+            email,
+            password,
+          } satisfies LoginRequestPayload),
+          headers: {
+            "content-type": "application/json",
+          },
+          method: "POST",
+        },
+      );
       const tokenPair = {
         access: response.access,
         refresh: response.refresh,
@@ -529,14 +463,21 @@ export function SessionProvider(props: PropsWithChildren) {
         );
       }
 
-      await signupWithApiRoute(
-        buildSignupRequestPayload({
-          email,
-          fullName,
-          intakeProfile: guestIntakeProfile,
-          password,
-        }),
-      );
+      await requestAuthJson<SignupResponsePayload>("/api/auth/signup", {
+        authenticate: false,
+        body: JSON.stringify(
+          buildSignupRequestPayload({
+            email,
+            fullName,
+            intakeProfile: guestIntakeProfile,
+            password,
+          }),
+        ),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
       await writePendingSignupEmail(email);
       setPendingSignupEmail(email);
     },
@@ -559,10 +500,20 @@ export function SessionProvider(props: PropsWithChildren) {
         throw new Error("No pending signup email exists for verification.");
       }
 
-      const response = await verifySignupCodeWithApiRoute({
-        code,
-        email,
-      });
+      const response = await requestAuthJson<TokenPairResponsePayload>(
+        "/api/auth/verify-signup-code",
+        {
+          authenticate: false,
+          body: JSON.stringify({
+            code,
+            email,
+          } satisfies VerifySignupCodeRequestPayload),
+          headers: {
+            "content-type": "application/json",
+          },
+          method: "POST",
+        },
+      );
       const tokenPair = {
         access: response.access,
         refresh: response.refresh,
@@ -599,13 +550,24 @@ export function SessionProvider(props: PropsWithChildren) {
       );
     }
 
-    await resendSignupCodeWithApiRoute({
-      email,
-    });
+    await requestAuthJson<MessageResponsePayload>(
+      "/api/auth/send-signup-code",
+      {
+        authenticate: false,
+        body: JSON.stringify({
+          email,
+        } satisfies SendSignupCodeRequestPayload),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      },
+    );
   }, [configurationError, isTestingBypassEnabled, pendingSignupEmail]);
 
   const signOut = useCallback(async () => {
     if (isTestingBypassEnabled) {
+      clearAuthTokenPair();
       setHasCompletedGuestOnboarding(true);
       setIntakeProfile(null);
       setPendingSignupEmail(null);
@@ -622,6 +584,7 @@ export function SessionProvider(props: PropsWithChildren) {
 
     if (storedTokenPair === null) {
       await clearAllStoredData();
+      clearAuthTokenPair();
       setHasCompletedGuestOnboarding(true);
       setIntakeProfile(null);
       setPendingSignupEmail(null);
@@ -630,13 +593,23 @@ export function SessionProvider(props: PropsWithChildren) {
       return;
     }
 
-    await logoutWithApiRoute({
-      accessToken: storedTokenPair.access,
-      payload: {
-        refresh: storedTokenPair.refresh,
-      },
-    });
+    try {
+      await requestAuthJson<MessageResponsePayload>("/api/auth/logout", {
+        body: JSON.stringify({
+          refresh: storedTokenPair.refresh,
+        } satisfies LogoutRequestPayload),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+    } catch (error) {
+      if (!isUnauthenticatedRequestError(error)) {
+        throw error;
+      }
+    }
     await clearAllStoredData();
+    clearAuthTokenPair();
     setHasCompletedGuestOnboarding(true);
     setIntakeProfile(null);
     setPendingSignupEmail(null);
@@ -658,8 +631,10 @@ export function SessionProvider(props: PropsWithChildren) {
         hasCompletedGuestOnboarding,
         intakeProfile,
         isAppleAuthAvailable: false,
+        isFirstAppLaunch,
         isLoading,
         isOnboardingComplete: intakeProfile !== null,
+        isReturningUserWelcomeRedirectEnabled,
         isTestingBypassEnabled,
         pendingSignupEmail,
         profile,

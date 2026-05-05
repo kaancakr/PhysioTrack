@@ -13,6 +13,7 @@ import {
   readPersistedProgressState,
   writePersistedProgressState,
 } from "@/lib/storage";
+import { getCurrentUtcDateTime } from "@/lib/datetime";
 import { useSession } from "@/providers/session-provider";
 import {
   type CompletedSessionRecord,
@@ -142,7 +143,7 @@ export function ProgressProvider(props: PropsWithChildren) {
       return currentSession;
     }
 
-    const now = new Date().toISOString();
+    const now = getCurrentUtcDateTime();
     const nextSession = buildNewSession(programId, now);
     const nextCompletedSessions = completedSessionsRef.current;
 
@@ -153,7 +154,7 @@ export function ProgressProvider(props: PropsWithChildren) {
   }, [commitProgressState, persistState]);
 
   const restartSession = useCallback(async (programId: string) => {
-    const now = new Date().toISOString();
+    const now = getCurrentUtcDateTime();
     const nextSession = buildNewSession(programId, now);
     const nextCompletedSessions = completedSessionsRef.current;
 
@@ -185,7 +186,7 @@ export function ProgressProvider(props: PropsWithChildren) {
       ...currentSession,
       currentStepIndex,
       elapsedStepSec,
-      updatedAt: new Date().toISOString(),
+      updatedAt: getCurrentUtcDateTime(),
     } satisfies SessionProgress;
     const nextCompletedSessions = completedSessionsRef.current;
 
@@ -211,7 +212,7 @@ export function ProgressProvider(props: PropsWithChildren) {
       currentStepIndex,
       elapsedStepSec,
       isPaused: true,
-      updatedAt: new Date().toISOString(),
+      updatedAt: getCurrentUtcDateTime(),
     } satisfies SessionProgress;
     const nextCompletedSessions = completedSessionsRef.current;
 
@@ -231,7 +232,7 @@ export function ProgressProvider(props: PropsWithChildren) {
     const nextSession = {
       ...currentSession,
       isPaused: false,
-      updatedAt: new Date().toISOString(),
+      updatedAt: getCurrentUtcDateTime(),
     } satisfies SessionProgress;
     const nextCompletedSessions = completedSessionsRef.current;
 
@@ -255,7 +256,7 @@ export function ProgressProvider(props: PropsWithChildren) {
       currentStepIndex,
       elapsedStepSec,
       isPaused: false,
-      updatedAt: new Date().toISOString(),
+      updatedAt: getCurrentUtcDateTime(),
     } satisfies SessionProgress;
     const nextCompletedSessions = completedSessionsRef.current;
 
@@ -274,7 +275,7 @@ export function ProgressProvider(props: PropsWithChildren) {
     }
 
     const completedRecord = {
-      completedAt: new Date().toISOString(),
+      completedAt: getCurrentUtcDateTime(),
       completedDurationSec,
       programId,
       startedAt: currentSession.startedAt,

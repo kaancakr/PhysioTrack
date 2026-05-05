@@ -16,6 +16,7 @@ import { Feather } from "@expo/vector-icons";
 import { AppButton } from "@/components/app-button";
 import { AppCard } from "@/components/app-card";
 import { ConfigNotice } from "@/components/config-notice";
+import { getAuthErrorMessage } from "@/lib/auth";
 import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
 
@@ -56,9 +57,7 @@ export default function VerifyEmailScreen() {
       setIsSubmitting(false);
       router.replace("/(tabs)/dashboard");
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("auth.errors.unknownVerify");
-      setFormError(message);
+      setFormError(getAuthErrorMessage(error, t("auth.errors.unknownVerify")));
       setIsSubmitting(false);
     }
   };
@@ -71,9 +70,7 @@ export default function VerifyEmailScreen() {
       await resendSignupCode();
       setSuccessMessage(t("auth.verifyEmail.resendSuccess"));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("auth.errors.unknownResend");
-      setFormError(message);
+      setFormError(getAuthErrorMessage(error, t("auth.errors.unknownResend")));
     } finally {
       setIsResending(false);
       setCountdown(45);

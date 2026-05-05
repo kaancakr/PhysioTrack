@@ -4,7 +4,7 @@
     "title": "PhysioTrack'e Hoşgeldiniz!",
     "subtitle": "PhysioTrack ile fizik tedavi egzersizlerini meditasyon huzuruyla birleştirin. Size özel programlarla her adımda daha güçlü hissedin.",
     "createAccount": "Hesap Oluşturun",
-    "alreadyHaveAccount": "Zaten Hesabınız Var"
+    "alreadyHaveAccount": "Zaten Hesabım Var"
   },
   "onboarding": {
     "introTitle": "PhysioTrack'e Hoşgeldiniz",
@@ -95,8 +95,7 @@
         "5": "5 seans"
       }
     }
-  }
-  ,
+  },
   "auth": {
     "fields": {
       "emailLabel": "E-posta",

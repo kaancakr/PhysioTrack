@@ -3,6 +3,7 @@ const RETRY_ATTEMPTS = 3;
 
 export async function GET(request: Request) {
   const authorizationHeader = request.headers.get("authorization");
+  const ifNoneMatchHeader = request.headers.get("if-none-match");
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt += 1) {
@@ -15,17 +16,29 @@ export async function GET(request: Request) {
         headers.set("authorization", authorizationHeader);
       }
 
+      if (ifNoneMatchHeader !== null) {
+        headers.set("if-none-match", ifNoneMatchHeader);
+      }
+
       const response = await fetch(`${getBackendBaseUrl()}/api/auth/me`, {
         headers,
         method: "GET",
       });
       const responseText = await response.text();
+      const responseHeaders = new Headers();
+      const contentTypeHeader = response.headers.get("content-type");
+      const etagHeader = response.headers.get("etag");
 
-      return new Response(responseText, {
-        headers: {
-          "Content-Type":
-            response.headers.get("content-type") ?? "application/json",
-        },
+      if (contentTypeHeader !== null) {
+        responseHeaders.set("Content-Type", contentTypeHeader);
+      }
+
+      if (etagHeader !== null) {
+        responseHeaders.set("ETag", etagHeader);
+      }
+
+      return new Response(response.status === 304 ? null : responseText, {
+        headers: responseHeaders,
         status: response.status,
       });
     } catch (error) {

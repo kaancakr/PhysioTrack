@@ -1,12 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 
+import { normalizeUtcDateTimes, parseAndNormalizeUtcJson } from "@/lib/datetime";
 import { type AuthTokenPair } from "@/types/auth";
 import {
-    type Gender,
-    type PersistedProgressState,
-    type ThemePreference,
-    type UserIntakeProfile,
+  type Gender,
+  type PersistedProgressState,
+  type ThemePreference,
+  type UserIntakeProfile,
 } from "@/types/domain";
 
 const THEME_PREFERENCE_KEY = "physiotrack:theme-preference";
@@ -15,17 +16,10 @@ const USER_INTAKE_KEY_PREFIX = "physiotrack:user-intake";
 const GUEST_INTAKE_KEY = "physiotrack:guest-intake";
 const AUTH_TOKEN_PAIR_KEY = "physiotrack.auth-token-pair";
 const PENDING_SIGNUP_EMAIL_KEY = "physiotrack:pending-signup-email";
+const HAS_OPENED_APP_KEY = "physiotrack:has-opened-app";
 
 function parseStoredJson(value: string, key: string): unknown {
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    throw new Error(
-      `Failed to parse storage value for key "${key}": ${
-        error instanceof Error ? error.message : "Unknown parsing error."
-      }`,
-    );
-  }
+  return parseAndNormalizeUtcJson(value, key);
 }
 
 function getProgressStorageKey(userId: string) {
@@ -139,7 +133,10 @@ export async function writePersistedProgressState(
   progressState: PersistedProgressState,
 ) {
   const key = getProgressStorageKey(userId);
-  await AsyncStorage.setItem(key, JSON.stringify(progressState));
+  await AsyncStorage.setItem(
+    key,
+    JSON.stringify(normalizeUtcDateTimes(progressState)),
+  );
 }
 
 export async function clearPersistedProgressState(userId: string) {
@@ -164,7 +161,7 @@ export async function writeUserIntakeProfile(
 ) {
   await AsyncStorage.setItem(
     getUserIntakeKey(userId),
-    JSON.stringify(intakeProfile),
+    JSON.stringify(normalizeUtcDateTimes(intakeProfile)),
   );
 }
 
@@ -182,7 +179,10 @@ export async function readGuestIntakeProfile() {
 export async function writeGuestIntakeProfile(
   intakeProfile: UserIntakeProfile,
 ) {
-  await AsyncStorage.setItem(GUEST_INTAKE_KEY, JSON.stringify(intakeProfile));
+  await AsyncStorage.setItem(
+    GUEST_INTAKE_KEY,
+    JSON.stringify(normalizeUtcDateTimes(intakeProfile)),
+  );
 }
 
 export async function clearGuestIntakeProfile() {
@@ -203,7 +203,7 @@ export async function readStoredAuthTokenPair() {
 export async function writeStoredAuthTokenPair(tokenPair: AuthTokenPair) {
   await SecureStore.setItemAsync(
     AUTH_TOKEN_PAIR_KEY,
-    JSON.stringify(tokenPair),
+    JSON.stringify(normalizeUtcDateTimes(tokenPair)),
   );
 }
 
@@ -228,14 +228,46 @@ export async function readPendingSignupEmail() {
 }
 
 export async function writePendingSignupEmail(email: string) {
-  await AsyncStorage.setItem(PENDING_SIGNUP_EMAIL_KEY, JSON.stringify(email));
+  await AsyncStorage.setItem(
+    PENDING_SIGNUP_EMAIL_KEY,
+    JSON.stringify(normalizeUtcDateTimes(email)),
+  );
 }
 
 export async function clearPendingSignupEmail() {
   await AsyncStorage.removeItem(PENDING_SIGNUP_EMAIL_KEY);
 }
 
+export async function readHasOpenedApp() {
+  const storedValue = await AsyncStorage.getItem(HAS_OPENED_APP_KEY);
+
+  if (storedValue === null) {
+    return false;
+  }
+
+  const parsedValue = parseStoredJson(storedValue, HAS_OPENED_APP_KEY);
+
+  if (typeof parsedValue !== "boolean") {
+    throw new Error("Unexpected app open flag value in storage.");
+  }
+
+  return parsedValue;
+}
+
+export async function writeHasOpenedApp() {
+  await AsyncStorage.setItem(
+    HAS_OPENED_APP_KEY,
+    JSON.stringify(normalizeUtcDateTimes(true)),
+  );
+}
+
 export async function clearAllStoredData() {
-  await AsyncStorage.clear();
+  const allKeys = await AsyncStorage.getAllKeys();
+  const removableKeys = allKeys.filter((key) => key !== HAS_OPENED_APP_KEY);
+
+  if (removableKeys.length > 0) {
+    await AsyncStorage.multiRemove(removableKeys);
+  }
+
   await SecureStore.deleteItemAsync(AUTH_TOKEN_PAIR_KEY);
 }
