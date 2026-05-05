@@ -145,7 +145,7 @@ export default function SessionScreen() {
         const recoveredElapsed = activeSession.isPaused
           ? activeSession.elapsedStepSec
           : activeSession.elapsedStepSec +
-            Math.max(0, Math.floor((Date.now() - new Date(activeSession.updatedAt).getTime()) / 1000));
+          Math.max(0, Math.floor((Date.now() - new Date(activeSession.updatedAt).getTime()) / 1000));
 
         setCurrentStepIndex(activeSession.currentStepIndex);
         setElapsedStepSec(recoveredElapsed);

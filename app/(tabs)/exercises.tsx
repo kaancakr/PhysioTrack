@@ -26,16 +26,14 @@ type FocusFilter = FocusArea | "all";
 export default function ExercisesScreen() {
   const { colors } = useAppTheme();
   const { width } = useWindowDimensions();
-  const { session } = useSession(); // Token kullanımı için session eklendi
+  const { session } = useSession();
   const metrics = getScreenMetrics(width);
 
-  // State Yönetimi
   const [programs, setPrograms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [focusFilter, setFocusFilter] = useState<FocusFilter>("all");
 
-  // API'den Veri Çekme
   useEffect(() => {
     const loadPrograms = async () => {
       setIsLoading(true);
@@ -45,20 +43,22 @@ export default function ExercisesScreen() {
           focus_area: focusFilter === "all" ? "" : focusFilter,
         });
 
+        // 1. Yetki anahtarını (Token) içeren başlıkları hazırla
         const headers: Record<string, string> = {
-          Accept: "application/json",
+          "Accept": "application/json",
         };
 
         if (session?.tokenPair?.access) {
           headers["Authorization"] = `Bearer ${session.tokenPair.access}`;
         }
 
+        // 2. İsteği headers ile birlikte gönder (401 hatasını çözen kısım)
         const response = await fetch(
           `/api/auth/programs/?${params.toString()}`,
           {
             method: "GET",
-            headers,
-          },
+            headers: headers,
+          }
         );
 
         if (!response.ok) {
@@ -66,65 +66,39 @@ export default function ExercisesScreen() {
         }
 
         const data = await response.json();
-
-        // Django "results" içinde dönüyorsa onu al, yoksa direkt datayı kullan
         setPrograms(data.results || data);
       } catch (error) {
-        console.error("Program yükleme hatası:", error);
-        setPrograms([]); // Hata durumunda listeyi temizle
+        console.error("Yükleme hatası:", error);
+        setPrograms([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadPrograms();
-  }, [query, focusFilter, session?.tokenPair?.access]); // Token değiştiğinde de tetiklenmeli
+  }, [query, focusFilter, session?.tokenPair?.access]);
 
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingHorizontal: metrics.horizontalPadding },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View
-          style={[
-            styles.content,
-            { gap: metrics.sectionGap, maxWidth: metrics.contentMaxWidth },
-          ]}
-        >
-          {/* Başlık Bölümü */}
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingHorizontal: metrics.horizontalPadding }]} showsVerticalScrollIndicator={false}>
+        <View style={[styles.content, { gap: metrics.sectionGap, maxWidth: metrics.contentMaxWidth }]}>
+
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Exercise programs
-            </Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Exercise programs</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               No-equipment physiotherapy routines organized for home use.
             </Text>
           </View>
 
-          {/* Filtreleme Paneli */}
           <AppCard>
             <View style={[styles.filterPanel, { gap: metrics.panelGap }]}>
               <TextInput
                 onChangeText={setQuery}
                 placeholder="Search by name or focus area"
                 placeholderTextColor={colors.textMuted}
-                style={[
-                  styles.searchInput,
-                  {
-                    backgroundColor: colors.surfaceMuted,
-                    borderColor: colors.border,
-                    color: colors.textPrimary,
-                  },
-                ]}
+                style={[styles.searchInput, { backgroundColor: colors.surfaceMuted, borderColor: colors.border, color: colors.textPrimary }]}
                 value={query}
               />
-
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.filterRow}>
                   {FOCUS_FILTERS.map((filter) => {
@@ -133,30 +107,9 @@ export default function ExercisesScreen() {
                       <Pressable
                         key={filter.value}
                         onPress={() => setFocusFilter(filter.value)}
-                        style={[
-                          styles.filterChip,
-                          {
-                            backgroundColor: isSelected
-                              ? colors.accentSoft
-                              : colors.surfaceMuted,
-                            borderColor: isSelected
-                              ? colors.accent
-                              : colors.border,
-                          },
-                        ]}
+                        style={[styles.filterChip, { backgroundColor: isSelected ? colors.accentSoft : colors.surfaceMuted, borderColor: isSelected ? colors.accent : colors.border }]}
                       >
-                        <Text
-                          style={[
-                            styles.filterLabel,
-                            {
-                              color: isSelected
-                                ? colors.accent
-                                : colors.textSecondary,
-                            },
-                          ]}
-                        >
-                          {filter.label}
-                        </Text>
+                        <Text style={[styles.filterLabel, { color: isSelected ? colors.accent : colors.textSecondary }]}>{filter.label}</Text>
                       </Pressable>
                     );
                   })}
@@ -165,59 +118,32 @@ export default function ExercisesScreen() {
             </View>
           </AppCard>
 
-          {/* Program Listesi */}
           <View style={styles.programList}>
             {isLoading ? (
-              <ActivityIndicator
-                color={colors.accent}
-                size="large"
-                style={{ marginTop: 20 }}
-              />
+              <ActivityIndicator color={colors.accent} size="large" style={{ marginTop: 20 }} />
             ) : (
-              programs.map((program, index) => (
-                <Link
-                  asChild
-                  href={`/exercise/${program.id}`}
-                  key={program.id?.toString() || index.toString()}
-                >
-                  <Pressable>
-                    <AppCard>
-                      <View style={styles.programCard}>
-                        <ArtworkPanel
-                          illustration={
-                            program.cover_image || program.coverImage
-                          }
-                          kicker={null}
-                          subtitle={`${program.focus_area_label || program.focusAreaLabel || ""} • ${formatDuration(program.total_duration_sec || program.totalDurationSec || 0)} • ${program.steps?.length || 0} steps`}
-                          title={program.title}
-                          withoutCard
-                        />
-                        {program.description && (
-                          <Text
-                            style={[
-                              styles.programDescription,
-                              { color: colors.textSecondary },
-                            ]}
-                          >
-                            {program.description}
-                          </Text>
-                        )}
-                      </View>
-                    </AppCard>
-                  </Pressable>
-                </Link>
-              ))
+              programs.map((program, index) => {
+                const programId = program.id || program.uuid;
+                return (
+                  <Link key={programId?.toString() || index.toString()} asChild href={`/exercise/${programId}`}>
+                    <Pressable>
+                      <AppCard>
+                        <View style={styles.programCard}>
+                          <ArtworkPanel
+                            illustration={program.cover_image || program.coverImage}
+                            subtitle={`${program.focus_area_label || ""} • ${formatDuration(program.total_duration_sec || 0)} • ${program.steps?.length || 0} steps`}
+                            title={program.title}
+                            withoutCard
+                          />
+                        </View>
+                      </AppCard>
+                    </Pressable>
+                  </Link>
+                );
+              })
             )}
             {!isLoading && programs.length === 0 && (
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: colors.textSecondary,
-                  marginTop: 20,
-                }}
-              >
-                No programs found.
-              </Text>
+              <Text style={{ textAlign: "center", color: colors.textSecondary, marginTop: 20 }}>No programs found.</Text>
             )}
           </View>
         </View>
@@ -234,23 +160,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: "800" },
   subtitle: { fontSize: 15, lineHeight: 22 },
   filterPanel: { width: "100%" },
-  searchInput: {
-    borderRadius: 16,
-    borderWidth: 1,
-    fontSize: 15,
-    minHeight: 54,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
+  searchInput: { borderRadius: 16, borderWidth: 1, fontSize: 15, minHeight: 54, paddingHorizontal: 16, paddingVertical: 14 },
   filterRow: { flexDirection: "row", gap: 10 },
-  filterChip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
+  filterChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 10 },
   filterLabel: { fontSize: 14, fontWeight: "700" },
   programList: { gap: 14 },
   programCard: { gap: 12, width: "100%" },
-  programDescription: { fontSize: 14, lineHeight: 22 },
 });

@@ -59,88 +59,88 @@ export default function ProfileScreen() {
             },
           ]}
         >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Profile & settings</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Adjust your theme, review your activity, and manage your account.
-          </Text>
-        </View>
-
-        <AppCard>
-          <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-              {profile?.fullName ?? "Patient"}
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Profile & settings</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Adjust your theme, review your activity, and manage your account.
             </Text>
-            <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-              {profile?.email ?? "Signed in account"}
-            </Text>
-            {isTestingBypassEnabled ? (
-              <Text style={[styles.warningText, { color: colors.accent }]}>
-                Auth bypass is enabled for local testing.
-              </Text>
-            ) : null}
-            {configurationError !== null ? (
-              <Text style={[styles.warningText, { color: colors.danger }]}>
-                {configurationError}
-              </Text>
-            ) : null}
           </View>
-        </AppCard>
 
-        <AppCard>
-          <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Appearance</Text>
-            <View style={[styles.themeOptions, width < 420 ? styles.themeOptionsColumn : null]}>
-              {THEME_OPTIONS.map((option) => {
-                const isSelected = option.value === preference;
+          <AppCard>
+            <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+                {profile?.fullName ?? "Patient"}
+              </Text>
+              <Text style={[styles.cardText, { color: colors.textSecondary }]}>
+                {profile?.email ?? "Signed in account"}
+              </Text>
+              {isTestingBypassEnabled ? (
+                <Text style={[styles.warningText, { color: colors.accent }]}>
+                  Auth bypass is enabled for local testing.
+                </Text>
+              ) : null}
+              {configurationError !== null ? (
+                <Text style={[styles.warningText, { color: colors.danger }]}>
+                  {configurationError}
+                </Text>
+              ) : null}
+            </View>
+          </AppCard>
 
-                return (
-                  <Pressable
-                    key={option.value}
-                    onPress={() => {
-                      void setPreference(option.value);
-                    }}
-                    style={[
-                      styles.themeOption,
-                      {
-                        backgroundColor: isSelected ? colors.accentSoft : colors.surfaceMuted,
-                        borderColor: isSelected ? colors.accent : colors.border,
-                      },
-                    ]}
-                  >
-                    <Text
+          <AppCard>
+            <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Appearance</Text>
+              <View style={[styles.themeOptions, width < 420 ? styles.themeOptionsColumn : null]}>
+                {THEME_OPTIONS.map((option) => {
+                  const isSelected = option.value === preference;
+
+                  return (
+                    <Pressable
+                      key={option.value}
+                      onPress={() => {
+                        void setPreference(option.value);
+                      }}
                       style={[
-                        styles.themeOptionLabel,
-                        { color: isSelected ? colors.accent : colors.textPrimary },
+                        styles.themeOption,
+                        {
+                          backgroundColor: isSelected ? colors.accentSoft : colors.surfaceMuted,
+                          borderColor: isSelected ? colors.accent : colors.border,
+                        },
                       ]}
                     >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+                      <Text
+                        style={[
+                          styles.themeOptionLabel,
+                          { color: isSelected ? colors.accent : colors.textPrimary },
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
-          </View>
-        </AppCard>
+          </AppCard>
 
-        <AppCard>
-          <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Your progress</Text>
-            <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-              Completed sessions: {completedSessions.length}
-            </Text>
-            <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-              Total guided time: {formatDuration(totalDurationSec)}
-            </Text>
-          </View>
-        </AppCard>
+          <AppCard>
+            <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Your progress</Text>
+              <Text style={[styles.cardText, { color: colors.textSecondary }]}>
+                Completed sessions: {completedSessions.length}
+              </Text>
+              <Text style={[styles.cardText, { color: colors.textSecondary }]}>
+                Total guided time: {formatDuration(totalDurationSec)}
+              </Text>
+            </View>
+          </AppCard>
 
-        <AppButton
-          disabled={isSigningOut}
-          label={isSigningOut ? "Signing out..." : "Sign out"}
-          onPress={handleSignOut}
-          variant="secondary"
-        />
+          <AppButton
+            disabled={isSigningOut}
+            label={isSigningOut ? "Signing out..." : "Sign out"}
+            onPress={handleSignOut}
+            variant="secondary"
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
