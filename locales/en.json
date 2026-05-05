@@ -134,6 +134,7 @@
       "verifyLabel": "Verify",
       "verifyingLabel": "Verifying...",
       "resendLabel": "Resend code",
+      "resendWaitLabel": "Resend in {{seconds}}s",
       "sendingLabel": "Sending...",
       "verifiedSuccess": "Your email has been verified.",
       "resendSuccess": "A new verification code has been sent.",

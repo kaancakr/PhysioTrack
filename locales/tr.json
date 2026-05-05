@@ -140,6 +140,7 @@
       "verifyLabel": "Doğrula",
       "verifyingLabel": "Doğrulanıyor...",
       "resendLabel": "Kodu yeniden gönder",
+      "resendWaitLabel": "{{seconds}} saniye sonra tekrar gönder",
       "sendingLabel": "Gönderiliyor...",
       "verifiedSuccess": "E-postan doğrulandı.",
       "resendSuccess": "Yeni bir doğrulama kodu gönderildi.",

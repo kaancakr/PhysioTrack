@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
@@ -34,6 +34,17 @@ export default function VerifyEmailScreen() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [countdown, setCountdown] = useState(45);
+
+  useEffect(() => {
+    let timer: any;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   const handleVerify = async () => {
     try {
@@ -65,6 +76,7 @@ export default function VerifyEmailScreen() {
       setFormError(message);
     } finally {
       setIsResending(false);
+      setCountdown(45);
     }
   };
 
@@ -141,10 +153,12 @@ export default function VerifyEmailScreen() {
               />
 
               <AppButton
-                disabled={isResending}
+                disabled={isResending || countdown > 0}
                 label={
                   isResending
                     ? t("auth.verifyEmail.sendingLabel")
+                    : countdown > 0
+                    ? t("auth.verifyEmail.resendWaitLabel", { seconds: countdown })
                     : t("auth.verifyEmail.resendLabel")
                 }
                 onPress={handleResend}
