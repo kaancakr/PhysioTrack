@@ -45,6 +45,7 @@ import {
   type SignupRequestPayload,
   type SignupResponsePayload,
   type TokenPairResponsePayload,
+  type UpdateProfileRequestPayload,
   type VerifySignupCodeRequestPayload,
 } from "@/types/auth";
 import { type UserIntakeProfile, type UserProfile } from "@/types/domain";
@@ -84,6 +85,8 @@ type SessionContextValue = {
   signUp: (email: string, password: string) => Promise<void>;
   resendSignupCode: () => Promise<void>;
   verifySignupCode: (code: string) => Promise<void>;
+  updateProfile: (payload: UpdateProfileRequestPayload) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -484,6 +487,55 @@ export function SessionProvider(props: PropsWithChildren) {
     [configurationError, isTestingBypassEnabled],
   );
 
+  const refreshProfile = useCallback(async () => {
+    if (isTestingBypassEnabled) {
+      return;
+    }
+
+    if (configurationError !== null) {
+      throw new Error(buildMissingConfigurationError("Refresh profile"));
+    }
+
+    const user = await requestAuthJson<BackendUser>("/api/auth/me", {
+      method: "GET",
+    });
+
+    const backendIntakeProfile = mapBackendUserToIntakeProfile(user);
+    if (backendIntakeProfile !== null) {
+      await writeUserIntakeProfile(user.id, backendIntakeProfile);
+      setIntakeProfile(backendIntakeProfile);
+    }
+    setProfile(mapBackendUserToProfile(user));
+    setSession({ user });
+  }, [configurationError, isTestingBypassEnabled]);
+
+  const updateProfile = useCallback(async (payload: UpdateProfileRequestPayload) => {
+    if (isTestingBypassEnabled) {
+      return;
+    }
+
+    if (configurationError !== null) {
+      throw new Error(buildMissingConfigurationError("Update profile"));
+    }
+
+    // Call the proxy route we just created
+    const user = await requestAuthJson<BackendUser>("/api/auth/profile/edit", {
+      body: JSON.stringify(payload),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "PATCH",
+    });
+
+    const backendIntakeProfile = mapBackendUserToIntakeProfile(user);
+    if (backendIntakeProfile !== null) {
+      await writeUserIntakeProfile(user.id, backendIntakeProfile);
+      setIntakeProfile(backendIntakeProfile);
+    }
+    setProfile(mapBackendUserToProfile(user));
+    setSession({ user });
+  }, [configurationError, isTestingBypassEnabled]);
+
   const verifySignupCode = useCallback(
     async (code: string) => {
       if (isTestingBypassEnabled) {
@@ -646,6 +698,8 @@ export function SessionProvider(props: PropsWithChildren) {
         signUp,
         resendSignupCode,
         verifySignupCode,
+        updateProfile,
+        refreshProfile,
       }}
     >
       {props.children}

@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons"; // İkonlar için ekledik
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StatusBar, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppButton } from "@/components/app-button";
@@ -17,126 +18,117 @@ const THEME_OPTIONS: { label: string; value: ThemePreference }[] = [
   { label: "Dark", value: "dark" },
 ];
 
+// Tasarımdaki liste elemanları için yardımcı bileşen
+const SettingsItem = ({ icon, label, onPress, color, value }: any) => (
+  <Pressable onPress={onPress} style={styles.settingsItem}>
+    <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
+      <Ionicons name={icon} size={20} color={color} />
+    </View>
+    <View style={{ flex: 1, marginLeft: 12 }}>
+      <Text style={styles.settingsLabel}>{label}</Text>
+      {value && <Text style={styles.settingsValue}>{value}</Text>}
+    </View>
+    <Ionicons name="chevron-forward" size={18} color="#CCC" />
+  </Pressable>
+);
+
 export default function ProfileScreen() {
   const { colors, preference, setPreference } = useAppTheme();
   const { width } = useWindowDimensions();
   const metrics = getScreenMetrics(width);
   const { completedSessions } = useProgress();
-  const { configurationError, isTestingBypassEnabled, profile, signOut } = useSession();
+  const { profile, signOut, refreshProfile, updateProfile } = useSession();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const totalDurationSec = completedSessions.reduce(
-    (sum, item) => sum + item.completedDurationSec,
-    0,
-  );
+  const totalDurationSec = completedSessions.reduce((sum, item) => sum + item.completedDurationSec, 0);
 
   const handleSignOut = async () => {
-    try {
-      setIsSigningOut(true);
-      await signOut();
-    } finally {
-      setIsSigningOut(false);
-    }
+    try { setIsSigningOut(true); await signOut(); } finally { setIsSigningOut(false); }
   };
 
   return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Üstteki Renkli Header (Dribbble'daki gibi) */}
+      <View style={[styles.purpleHeader, { backgroundColor: colors.accent }]}>
+        <SafeAreaView edges={["top"]}>
+          <View style={styles.headerTop}>
+            <Text style={styles.headerTitle}>Profile</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingHorizontal: metrics.horizontalPadding,
-          },
-        ]}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[
-            styles.content,
-            {
-              gap: metrics.sectionGap,
-              maxWidth: metrics.contentMaxWidth,
-            },
-          ]}
-        >
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Profile & settings</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Adjust your theme, review your activity, and manage your account.
-            </Text>
+        {/* Profil Bilgileri Kartı */}
+        <View style={styles.profileCard}>
+          <View style={[styles.avatar, { borderColor: colors.background }]}>
+            <Text style={{ fontSize: 40 }}>👤</Text>
           </View>
+          <Text style={[styles.userName, { color: colors.textPrimary }]}>
+            {profile?.fullName ?? "Patient"}
+          </Text>
+          <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
+            {profile?.email}
+          </Text>
+        </View>
 
+        {/* Content Bölümü */}
+        <View style={{ paddingHorizontal: 20, gap: 20 }}>
+
+          <Text style={styles.sectionTitle}>ACCOUNT SETTINGS</Text>
           <AppCard>
-            <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                {profile?.fullName ?? "Patient"}
-              </Text>
-              <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-                {profile?.email ?? "Signed in account"}
-              </Text>
-              {isTestingBypassEnabled ? (
-                <Text style={[styles.warningText, { color: colors.accent }]}>
-                  Auth bypass is enabled for local testing.
-                </Text>
-              ) : null}
-              {configurationError !== null ? (
-                <Text style={[styles.warningText, { color: colors.danger }]}>
-                  {configurationError}
-                </Text>
-              ) : null}
-            </View>
+            <SettingsItem
+              icon="person-outline"
+              label="Edit Name"
+              color={colors.accent}
+              onPress={() => updateProfile({ full_name: "Zeynep Yüksel" })}
+            />
+            <View style={styles.separator} />
+            <SettingsItem
+              icon="sync-outline"
+              label="Refresh Profile"
+              color="#4CAF50"
+              onPress={refreshProfile}
+            />
           </AppCard>
 
+          <Text style={styles.sectionTitle}>PROGRESS</Text>
           <AppCard>
-            <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Appearance</Text>
-              <View style={[styles.themeOptions, width < 420 ? styles.themeOptionsColumn : null]}>
-                {THEME_OPTIONS.map((option) => {
-                  const isSelected = option.value === preference;
-
-                  return (
-                    <Pressable
-                      key={option.value}
-                      onPress={() => {
-                        void setPreference(option.value);
-                      }}
-                      style={[
-                        styles.themeOption,
-                        {
-                          backgroundColor: isSelected ? colors.accentSoft : colors.surfaceMuted,
-                          borderColor: isSelected ? colors.accent : colors.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.themeOptionLabel,
-                          { color: isSelected ? colors.accent : colors.textPrimary },
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+            <View style={styles.statsRow}>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{completedSessions.length}</Text>
+                <Text style={styles.statLabel}>Sessions</Text>
+              </View>
+              <View style={[styles.separator, { height: '60%', width: 1 }]} />
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{formatDuration(totalDurationSec)}</Text>
+                <Text style={styles.statLabel}>Total Time</Text>
               </View>
             </View>
           </AppCard>
 
-          <AppCard>
-            <View style={[styles.cardSection, { gap: metrics.panelGap }]}>
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Your progress</Text>
-              <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-                Completed sessions: {completedSessions.length}
-              </Text>
-              <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-                Total guided time: {formatDuration(totalDurationSec)}
-              </Text>
-            </View>
-          </AppCard>
+          <Text style={styles.sectionTitle}>APPEARANCE</Text>
+          <View style={styles.themeRow}>
+            {THEME_OPTIONS.map((option) => (
+              <Pressable
+                key={option.value}
+                onPress={() => setPreference(option.value)}
+                style={[
+                  styles.themeTab,
+                  { backgroundColor: preference === option.value ? colors.accent : colors.surfaceMuted }
+                ]}
+              >
+                <Text style={{ color: preference === option.value ? '#FFF' : colors.textPrimary, fontWeight: '600' }}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
           <AppButton
             disabled={isSigningOut}
@@ -146,67 +138,72 @@ export default function ProfileScreen() {
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
+  container: { flex: 1 },
+  purpleHeader: {
+    height: 280,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 0,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 32,
-    paddingTop: 12,
+
+  headerTop: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    alignItems: 'center',
   },
-  content: {
-    alignSelf: "center",
-    width: "100%",
+  headerTitle: { color: '#FFF', fontSize: 18, fontWeight: '700' },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingTop: 100, paddingBottom: 150 },
+  profileCard: {
+    alignItems: 'center',
+    marginBottom: 30,
   },
-  header: {
-    gap: 8,
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#EEE',
+    borderWidth: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: "800",
+  userName: { fontSize: 22, fontWeight: '800' },
+  userEmail: { fontSize: 14, opacity: 0.7, marginTop: 4 },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: '#999', marginLeft: 5, marginBottom: -10 },
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
   },
-  subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  cardSection: {
-    gap: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  cardText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  warningText: {
-    fontSize: 14,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-  themeOptions: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  themeOptionsColumn: {
-    flexDirection: "column",
-  },
-  themeOption: {
-    borderRadius: 16,
-    borderWidth: 1,
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  themeOptionLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-    textAlign: "center",
-  },
+  settingsLabel: { fontSize: 16, fontWeight: '600' },
+  settingsValue: { fontSize: 12, color: '#999' },
+  separator: { height: 1, backgroundColor: '#EEE' },
+  statsRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+  statBox: { flex: 1, alignItems: 'center' },
+  statNumber: { fontSize: 20, fontWeight: '800', color: '#333' },
+  statLabel: { fontSize: 12, color: '#999' },
+  themeRow: { flexDirection: 'row', gap: 10 },
+  themeTab: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center' }
 });

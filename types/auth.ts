@@ -58,6 +58,16 @@ export type SendSignupCodeRequestPayload = {
   email: string;
 };
 
+export type UpdateProfileRequestPayload = Partial<{
+  age_range: UserIntakeProfile["ageRange"];
+  daily_step_goal: UserIntakeProfile["dailyStepGoal"];
+  focus_area: FocusArea;
+  full_name: string;
+  gender: UserIntakeProfile["gender"];
+  weekly_goal: WeeklyGoal;
+  metadata: string;
+}>;
+
 export type LogoutRequestPayload = {
   refresh: string;
 };
