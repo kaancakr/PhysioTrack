@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons"; // İkonlar için ekledik
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, ScrollView, StatusBar, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,7 +18,6 @@ const THEME_OPTIONS: { label: string; value: ThemePreference }[] = [
   { label: "Dark", value: "dark" },
 ];
 
-// Tasarımdaki liste elemanları için yardımcı bileşen
 const SettingsItem = ({ icon, label, onPress, color, value }: any) => (
   <Pressable onPress={onPress} style={styles.settingsItem}>
     <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
@@ -37,20 +36,36 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const metrics = getScreenMetrics(width);
   const { completedSessions } = useProgress();
-  const { profile, signOut, refreshProfile, updateProfile } = useSession();
+
+  // useSession hook'u /api/auth/me üzerinden gelen profil bilgilerini yönetir
+  const { profile, signOut, refreshProfile } = useSession();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const totalDurationSec = completedSessions.reduce((sum, item) => sum + item.completedDurationSec, 0);
 
+  // Bu fonksiyon artık ismi manuel değiştirmez, 
+  // backend'deki (onboarding ekranında girilen) ismi tazeler.
+  const handleSyncName = async () => {
+    try {
+      await refreshProfile();
+    } catch (error) {
+      console.error("İsim senkronize edilemedi:", error);
+    }
+  };
+
   const handleSignOut = async () => {
-    try { setIsSigningOut(true); await signOut(); } finally { setIsSigningOut(false); }
+    try {
+      setIsSigningOut(true);
+      await signOut();
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
-      {/* Üstteki Renkli Header (Dribbble'daki gibi) */}
       <View style={[styles.purpleHeader, { backgroundColor: colors.accent }]}>
         <SafeAreaView edges={["top"]}>
           <View style={styles.headerTop}>
@@ -64,29 +79,29 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profil Bilgileri Kartı */}
         <View style={styles.profileCard}>
           <View style={[styles.avatar, { borderColor: colors.background }]}>
             <Text style={{ fontSize: 40 }}>👤</Text>
           </View>
+
+          {/* Giriş ekranında (Onboarding) girilen isim burada gösterilir */}
           <Text style={[styles.userName, { color: colors.textPrimary }]}>
-            {profile?.fullName ?? "Patient"}
+            {profile?.fullName ?? "Yükleniyor..."}
           </Text>
+
           <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
             {profile?.email}
           </Text>
         </View>
 
-        {/* Content Bölümü */}
         <View style={{ paddingHorizontal: 20, gap: 20 }}>
-
           <Text style={styles.sectionTitle}>ACCOUNT SETTINGS</Text>
           <AppCard>
             <SettingsItem
               icon="person-outline"
-              label="Edit Name"
+              label="Edit Profile"
               color={colors.accent}
-              onPress={() => updateProfile({ full_name: "Zeynep Yüksel" })}
+              onPress={handleSyncName}
             />
             <View style={styles.separator} />
             <SettingsItem
@@ -154,7 +169,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 0,
   },
-
   headerTop: {
     paddingHorizontal: 20,
     paddingVertical: 20,
@@ -189,6 +203,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 15,
+    paddingHorizontal: 15,
   },
   iconContainer: {
     width: 36,
