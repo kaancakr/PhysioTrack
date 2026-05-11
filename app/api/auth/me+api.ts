@@ -1,18 +1,9 @@
-const BACKEND_URL_ENV_KEY = "BACKEND_URL";
+import { getBackendBaseUrl } from "@/lib/backend";
 const RETRY_ATTEMPTS = 3;
-
-function getBackendBaseUrl() {
-  const rawValue = process.env.BACKEND_URL;
-
-  if (typeof rawValue !== "string" || rawValue.trim().length === 0) {
-    throw new Error(`Set ${BACKEND_URL_ENV_KEY} before calling auth me API route.`);
-  }
-
-  return rawValue.trim().replace(/\/+$/, "");
-}
 
 export async function GET(request: Request) {
   const authorizationHeader = request.headers.get("authorization");
+  const ifNoneMatchHeader = request.headers.get("if-none-match");
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt += 1) {
@@ -25,16 +16,29 @@ export async function GET(request: Request) {
         headers.set("authorization", authorizationHeader);
       }
 
+      if (ifNoneMatchHeader !== null) {
+        headers.set("if-none-match", ifNoneMatchHeader);
+      }
+
       const response = await fetch(`${getBackendBaseUrl()}/api/auth/me`, {
         headers,
         method: "GET",
       });
       const responseText = await response.text();
+      const responseHeaders = new Headers();
+      const contentTypeHeader = response.headers.get("content-type");
+      const etagHeader = response.headers.get("etag");
 
-      return new Response(responseText, {
-        headers: {
-          "Content-Type": response.headers.get("content-type") ?? "application/json",
-        },
+      if (contentTypeHeader !== null) {
+        responseHeaders.set("Content-Type", contentTypeHeader);
+      }
+
+      if (etagHeader !== null) {
+        responseHeaders.set("ETag", etagHeader);
+      }
+
+      return new Response(response.status === 304 ? null : responseText, {
+        headers: responseHeaders,
         status: response.status,
       });
     } catch (error) {

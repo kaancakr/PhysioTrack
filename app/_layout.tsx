@@ -1,4 +1,3 @@
-import "react-native-url-polyfill/auto";
 import "../lib/i18n";
 
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -16,8 +15,10 @@ function NavigationGate() {
   const {
     currentUserId,
     hasCompletedGuestOnboarding,
+    isFirstAppLaunch,
     isLoading,
     isOnboardingComplete,
+    isReturningUserWelcomeRedirectEnabled,
     pendingSignupEmail,
   } = useSession();
 
@@ -29,19 +30,32 @@ function NavigationGate() {
     const isAuthRoute = topSegment === "(auth)";
     const isTabRoute = topSegment === "(tabs)";
     const isOnboardingRoute = topSegment === "onboarding";
-    const isExerciseRoute = topSegment === "exercise";
-    const isSessionRoute = topSegment === "session";
     const authSubRoute = segments[1];
     const isLoginRoute = isAuthRoute && authSubRoute === "login";
+    const isWelcomeRoute = isAuthRoute && authSubRoute === "welcome";
     const isVerifyEmailRoute = isAuthRoute && authSubRoute === "verify-email";
 
-    const isProtectedAppRoute = isTabRoute || isExerciseRoute || isSessionRoute;
+    const isProtectedAppRoute = isTabRoute;
+    const shouldRedirectSignedOutUserToWelcome =
+      isReturningUserWelcomeRedirectEnabled && !isFirstAppLaunch;
 
     if (currentUserId === null) {
-      if (!hasCompletedGuestOnboarding && !isOnboardingRoute && !isLoginRoute) {
-        router.replace("/onboarding");
-      } else if (isVerifyEmailRoute && pendingSignupEmail === null) {
+      if (isVerifyEmailRoute && pendingSignupEmail === null) {
         router.replace("/(auth)/signup");
+      } else if (
+        !hasCompletedGuestOnboarding &&
+        !isOnboardingRoute &&
+        !isLoginRoute &&
+        !isWelcomeRoute &&
+        !isVerifyEmailRoute
+      ) {
+        router.replace("/onboarding");
+      } else if (
+        shouldRedirectSignedOutUserToWelcome &&
+        !isAuthRoute &&
+        !isOnboardingRoute
+      ) {
+        router.replace("/(auth)/welcome");
       } else if (hasCompletedGuestOnboarding && !isAuthRoute) {
         router.replace("/(auth)/welcome");
       }
@@ -69,8 +83,10 @@ function NavigationGate() {
   }, [
     currentUserId,
     isLoading,
+    isFirstAppLaunch,
     isOnboardingComplete,
     hasCompletedGuestOnboarding,
+    isReturningUserWelcomeRedirectEnabled,
     router,
     pendingSignupEmail,
     segments,

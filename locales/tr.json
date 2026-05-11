@@ -4,7 +4,7 @@
     "title": "PhysioTrack'e Hoşgeldiniz!",
     "subtitle": "PhysioTrack ile fizik tedavi egzersizlerini meditasyon huzuruyla birleştirin. Size özel programlarla her adımda daha güçlü hissedin.",
     "createAccount": "Hesap Oluşturun",
-    "alreadyHaveAccount": "Zaten Hesabınız Var"
+    "alreadyHaveAccount": "Zaten Hesabım Var"
   },
   "onboarding": {
     "introTitle": "PhysioTrack'e Hoşgeldiniz",
@@ -21,8 +21,10 @@
     "progress": {
       "aboutTitle": "Senin hakkında",
       "aboutDesc": "Bu planın kimin için olduğunu söyle, deneyimi ilk ekrandan itibaren kişiselleştirelim.",
+      "genderTitle": "Cinsiyet",
+      "genderDesc": "Ağrı bölgesini seçmeden önce backend'e gönderilecek cinsiyet tercihini profiline ekleyelim.",
       "focusTitle": "Odak alanı",
-      "focusDesc": "En çok destek istediğin bölgeyi seç, egzersiz programın ilk andan itibaren daha ilgili olsun.",
+      "focusDesc": "Ön ve arka görünüm arasında geçiş yap, sonra en çok destek istediğin bölgeye dokun.",
       "goalsTitle": "Hedefler",
       "goalsDesc": "Sürdürülebilir bir tempo seçerek iyileşme ivmeni her gün görünür kıl."
     },
@@ -35,10 +37,20 @@
       "fullNamePlaceholder": "Ahmet Yılmaz"
     },
     "step2": {
-      "title": "Odak noktanızı seçin",
-      "text": "Sizin için en uygun egzersiz programını ana ekranınızın en üstüne getireceğiz."
+      "title": "Cinsiyetinizi seçin",
+      "text": "Bu tercihi backend'e gönderilecek intake profilinize dahil edeceğiz."
     },
     "step3": {
+      "title": "Odak bölgenizi seçin",
+      "text": "Önce en çok destek istediğiniz bölgeyi vücut haritası üzerinden seçin.",
+      "bodyHint": "Odaklanmak istediğiniz bölgeyi vurgulamak için sağdaki alan kartlarından birini seçin.",
+      "selectedArea": "Seçilen bölge: {{area}}",
+      "bodyView": {
+        "front": "Ön",
+        "back": "Arka"
+      }
+    },
+    "step4": {
       "title": "Haftalık ritminizi belirleyin",
       "text": "Bu hedefler, panonuzdaki ilerleme çubuklarına ve halkalarına güç verir.",
       "weeklyTitle": "Haftada ne kadar hareket etmek istersiniz?",
@@ -55,6 +67,11 @@
     },
     "footerHint": "Bu tercihleri daha sonra profil sayfasından güncelleyebilirsin.",
     "options": {
+      "gender": {
+        "male": "Erkek",
+        "female": "Kadın",
+        "prefer_not_to_say": "Belirtmek istemiyorum"
+      },
       "focus": {
         "neck": {
           "label": "Boyun",
@@ -65,7 +82,11 @@
           "label": "Sırt / Bel",
           "desc": "Destek ve hareket rahatlığı"
         },
-        "knee": { "label": "Diz", "desc": "Güç ve güven" }
+        "knee": { "label": "Diz", "desc": "Güç ve güven" },
+        "mobility": {
+          "label": "Mobilite",
+          "desc": "Genel hareket ve tüm vücut esnekliği"
+        }
       },
       "weekly": {
         "2": "2 seans",
@@ -74,8 +95,7 @@
         "5": "5 seans"
       }
     }
-  }
-  ,
+  },
   "auth": {
     "fields": {
       "emailLabel": "E-posta",
@@ -119,10 +139,75 @@
       "verifyLabel": "Doğrula",
       "verifyingLabel": "Doğrulanıyor...",
       "resendLabel": "Kodu yeniden gönder",
+      "resendWaitLabel": "{{seconds}} saniye sonra tekrar gönder",
       "sendingLabel": "Gönderiliyor...",
       "verifiedSuccess": "E-postan doğrulandı.",
       "resendSuccess": "Yeni bir doğrulama kodu gönderildi.",
       "changeEmail": "E-posta adresini değiştir"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "heroSummaryFallback": "İyileşme tercihlerin burada görünecek.",
+    "unknownUser": "Bilinmeyen kullanıcı",
+    "emptyValue": "Belirlenmedi",
+    "emailVerified": "E-posta doğrulandı",
+    "emailNotVerified": "E-posta doğrulanmadı",
+    "refresh": "Yenile",
+    "refreshing": "Yenileniyor...",
+    "editProfile": "Profili düzenle",
+    "progressSection": "İlerleme",
+    "programsMetric": "Programlar",
+    "exercisesMetric": "Egzersizler",
+    "stepsMetric": "Adımlar",
+    "programsSubtitle": "Şimdiye kadar tamamladığın yönlendirmeli programlar.",
+    "exercisesSubtitle": "Tüm programlardaki egzersiz kilometre taşları.",
+    "stepsSubtitle": "Tamamlanan adım adım iyileşme hareketleri.",
+    "progressPercent": "{{percent}} tamamlandı",
+    "statusMetric": "Plan durumu",
+    "planFinished": "Tamamlandı",
+    "planInProgress": "Devam ediyor",
+    "accountSection": "Hesap",
+    "planSection": "İyileşme planı",
+    "appearanceSection": "Görünüm",
+    "supportSection": "Destek",
+    "fullName": "Ad soyad",
+    "email": "E-posta",
+    "focusArea": "Odak alanı",
+    "weeklyGoal": "Haftalık tempo",
+    "dailyStepGoal": "Günlük adım hedefi",
+    "dailyStepsValue": "{{count}} adım",
+    "sendFeedback": "Geri bildirim gönder",
+    "sendFeedbackHint": "Fikirlerini, hataları veya kafa karıştıran noktaları paylaş.",
+    "rateApp": "Uygulamayı puanla",
+    "rateAppHint": "PhysioTrack'in daha fazla kişiye ulaşmasına yardımcı ol.",
+    "signOut": "Çıkış yap",
+    "signingOut": "Çıkış yapılıyor...",
+    "theme": {
+      "system": "Sistem",
+      "light": "Açık",
+      "dark": "Koyu"
+    },
+    "edit": {
+      "eyebrow": "Profil ayarları",
+      "title": "Planını düzenle",
+      "fullNamePlaceholder": "Jamie Patient",
+      "ageTitle": "Yaş aralığı",
+      "ageHint": "Profil verilerinin güncel kalması için yaş aralığını güncel tut.",
+      "genderTitle": "Cinsiyet",
+      "genderHint": "Bu tercih iyileşme profiline eklenir.",
+      "focusAreaTitle": "Odak alanı",
+      "focusAreaHint": "Şu anda en çok destek almak istediğin bölgeyi seç.",
+      "weeklyGoalTitle": "Haftalık tempo",
+      "weeklyGoalHint": "Her hafta kaç yönlendirmeli seans istediğini ayarla.",
+      "dailyStepGoalTitle": "Günlük adım hedefi",
+      "dailyStepGoalHint": "Rutinin için gerçekçi hissettiren bir yürüyüş hedefi seç.",
+      "save": "Değişiklikleri kaydet",
+      "saving": "Kaydediliyor...",
+      "validation": {
+        "fullNameRequired": "Lütfen ad soyad girin.",
+        "saveFailed": "Profiliniz kaydedilemedi."
+      }
     }
   }
 }

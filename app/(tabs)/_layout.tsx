@@ -1,3 +1,4 @@
+import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { useWindowDimensions } from "react-native";
@@ -12,6 +13,29 @@ export default function TabsLayout() {
     width >= 900 ? wp(width, 22) : width >= 640 ? dp(width, 44) : dp(width, 14);
   const tabHeight = dp(width, 74);
   const tabBarWidth = width - horizontalInset * 2;
+  const defaultTabBarStyle = {
+    alignSelf: "center" as const,
+    backgroundColor: colors.card,
+    borderTopColor: "transparent",
+    borderRadius: dp(width, 36),
+    bottom: dp(width, 16),
+    elevation: 0,
+    height: tabHeight,
+    left: undefined,
+    marginHorizontal: horizontalInset,
+    paddingBottom: dp(width, 5),
+    paddingTop: dp(width, 5),
+    position: "absolute" as const,
+    right: undefined,
+    shadowColor: isDark ? "#000000" : "#21414F",
+    shadowOffset: {
+      height: 12,
+      width: 0,
+    },
+    shadowOpacity: isDark ? 0.3 : 0.08,
+    shadowRadius: 24,
+    width: tabBarWidth,
+  };
 
   return (
     <Tabs
@@ -19,29 +43,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          alignSelf: "center",
-          backgroundColor: colors.card,
-          borderTopColor: "transparent",
-          borderRadius: dp(width, 36),
-          bottom: dp(width, 16),
-          elevation: 0,
-          height: tabHeight,
-          left: undefined,
-          marginHorizontal: horizontalInset,
-          paddingBottom: dp(width, 5),
-          paddingTop: dp(width, 5),
-          position: "absolute",
-          right: undefined,
-          shadowColor: isDark ? "#000000" : "#21414F",
-          shadowOffset: {
-            height: 12,
-            width: 0,
-          },
-          shadowOpacity: isDark ? 0.3 : 0.08,
-          shadowRadius: 24,
-          width: tabBarWidth,
-        },
+        tabBarStyle: defaultTabBarStyle,
         tabBarLabelStyle: {
           fontSize: dp(width, 12),
           fontWeight: "700",
@@ -74,25 +76,71 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="exercises"
+        name="programs/index"
         options={{
-          title: "Exercises",
+          title: "Programs",
           tabBarIcon: ({ color, size }) => (
             <Ionicons color={color} name="body" size={dp(width, size)} />
           ),
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="programs/[programId]/index"
         options={{
-          title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              color={color}
-              name="person-circle"
-              size={dp(width, size)}
-            />
-          ),
+          href: null,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="programs/[programId]/exercises/[exerciseId]/index"
+        options={{
+          href: null,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="programs/[programId]/exercises/[exerciseId]/session"
+        options={{
+          href: null,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="programs/[programId]/exercises/[exerciseId]/completed"
+        options={{
+          href: null,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={({ route }) => {
+          const focusedRouteName = getFocusedRouteNameFromRoute(route);
+          const isEditRoute = focusedRouteName === "edit";
+
+          return {
+            title: "Profile",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons
+                color={color}
+                name="person-circle"
+                size={dp(width, size)}
+              />
+            ),
+            tabBarStyle: isEditRoute
+              ? {
+                  display: "none",
+                }
+              : defaultTabBarStyle,
+          };
         }}
       />
       <Tabs.Screen

@@ -21,8 +21,10 @@
     "progress": {
       "aboutTitle": "About you",
       "aboutDesc": "Tell us who this plan is for and we will personalize the experience from the first screen.",
+      "genderTitle": "Gender",
+      "genderDesc": "Save the gender preference you want included in your intake profile before choosing the body area.",
       "focusTitle": "Focus area",
-      "focusDesc": "Choose where you want the most support so your exercise program feels immediately relevant.",
+      "focusDesc": "Slide between the front and back body views, then tap the area where you want the most support.",
       "goalsTitle": "Goals",
       "goalsDesc": "Pick a routine that feels achievable and keeps your recovery momentum visible every day."
     },
@@ -35,10 +37,20 @@
       "fullNamePlaceholder": "Jamie Patient"
     },
     "step2": {
-      "title": "Choose your focus",
-      "text": "We'll bring the most relevant exercise program to the top of your home screen."
+      "title": "Choose your gender",
+      "text": "We will include this preference in your intake profile when it is sent to the backend."
     },
     "step3": {
+      "title": "Choose your focus area",
+      "text": "Use the body map to tell us where you want the most support first.",
+      "bodyHint": "Choose one of the area cards on the right to highlight the part of the body you want to focus on.",
+      "selectedArea": "Selected area: {{area}}",
+      "bodyView": {
+        "front": "Front",
+        "back": "Back"
+      }
+    },
+    "step4": {
       "title": "Set your weekly rhythm",
       "text": "These goals power the bars and circles on your dashboard.",
       "weeklyTitle": "How often do you want to move?",
@@ -55,11 +67,20 @@
     },
     "footerHint": "You can update these preferences later from your profile.",
     "options": {
+      "gender": {
+        "male": "Male",
+        "female": "Female",
+        "prefer_not_to_say": "Prefer not to say"
+      },
       "focus": {
         "neck": { "label": "Neck", "desc": "Desk strain and stiffness" },
         "shoulder": { "label": "Shoulder", "desc": "Mobility and control" },
         "back": { "label": "Back", "desc": "Support and movement comfort" },
-        "knee": { "label": "Knee", "desc": "Strength and confidence" }
+        "knee": { "label": "Knee", "desc": "Strength and confidence" },
+        "mobility": {
+          "label": "Mobility",
+          "desc": "General movement and full-body flexibility"
+        }
       },
       "weekly": {
         "2": "2 sessions",
@@ -68,8 +89,7 @@
         "5": "5 sessions"
       }
     }
-  }
-  ,
+  },
   "auth": {
     "fields": {
       "emailLabel": "Email",
@@ -113,10 +133,75 @@
       "verifyLabel": "Verify",
       "verifyingLabel": "Verifying...",
       "resendLabel": "Resend code",
+      "resendWaitLabel": "Resend in {{seconds}}s",
       "sendingLabel": "Sending...",
       "verifiedSuccess": "Your email has been verified.",
       "resendSuccess": "A new verification code has been sent.",
       "changeEmail": "Change email address"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "heroSummaryFallback": "Your recovery preferences will appear here.",
+    "unknownUser": "Unknown user",
+    "emptyValue": "Not set",
+    "emailVerified": "Email verified",
+    "emailNotVerified": "Email not verified",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "editProfile": "Edit profile",
+    "progressSection": "Progress",
+    "programsMetric": "Programs",
+    "exercisesMetric": "Exercises",
+    "stepsMetric": "Steps",
+    "programsSubtitle": "Your guided programs completed so far.",
+    "exercisesSubtitle": "Exercise milestones across all programs.",
+    "stepsSubtitle": "Step-by-step recovery actions completed.",
+    "progressPercent": "{{percent}} complete",
+    "statusMetric": "Plan status",
+    "planFinished": "Finished",
+    "planInProgress": "In progress",
+    "accountSection": "Account",
+    "planSection": "Recovery plan",
+    "appearanceSection": "Appearance",
+    "supportSection": "Support",
+    "fullName": "Full name",
+    "email": "Email",
+    "focusArea": "Focus area",
+    "weeklyGoal": "Weekly rhythm",
+    "dailyStepGoal": "Daily step goal",
+    "dailyStepsValue": "{{count}} steps",
+    "sendFeedback": "Send feedback",
+    "sendFeedbackHint": "Share ideas, bugs, or anything that felt confusing.",
+    "rateApp": "Rate the app",
+    "rateAppHint": "Help more people discover PhysioTrack.",
+    "signOut": "Sign out",
+    "signingOut": "Signing out...",
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "edit": {
+      "eyebrow": "Profile settings",
+      "title": "Edit your plan",
+      "fullNamePlaceholder": "Jamie Patient",
+      "ageTitle": "Age range",
+      "ageHint": "Keep your age range current so the profile stays aligned with your intake data.",
+      "genderTitle": "Gender",
+      "genderHint": "This preference is included in your recovery profile.",
+      "focusAreaTitle": "Focus area",
+      "focusAreaHint": "Choose the area where you want the most support right now.",
+      "weeklyGoalTitle": "Weekly rhythm",
+      "weeklyGoalHint": "Adjust how many guided sessions you want each week.",
+      "dailyStepGoalTitle": "Daily step goal",
+      "dailyStepGoalHint": "Pick a walking target that feels realistic for your routine.",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "validation": {
+        "fullNameRequired": "Please enter your full name.",
+        "saveFailed": "We could not save your profile."
+      }
     }
   }
 }

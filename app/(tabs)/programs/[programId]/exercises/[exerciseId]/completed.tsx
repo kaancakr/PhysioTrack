@@ -1,17 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link, useLocalSearchParams } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppButton } from "@/components/app-button";
+import { AppBackButton } from "@/components/app-back-button";
 import { AppCard } from "@/components/app-card";
 import { ArtworkPanel } from "@/components/artwork-panel";
-import { EXERCISE_PROGRAMS } from "@/data/exercise-programs";
 import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
 import { formatDuration } from "@/theme/formatters";
 
-function parsePositiveInteger(value: string | string[] | undefined) {
+function parsePositiveInteger(value: string | string[] | undefined): number {
   const rawValue = Array.isArray(value) ? value[0] : value;
 
   if (rawValue === undefined) {
@@ -27,48 +27,52 @@ function parsePositiveInteger(value: string | string[] | undefined) {
   return parsedValue;
 }
 
-export default function SessionCompleteScreen() {
+function parseRouteString(value: string | string[] | undefined): string | null {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+
+  if (typeof rawValue !== "string" || rawValue.trim().length === 0) {
+    return null;
+  }
+
+  return rawValue;
+}
+
+export default function ExerciseCompletedScreen() {
   const { colors } = useAppTheme();
+  const router = useRouter();
   const { intakeProfile, profile } = useSession();
   const params = useLocalSearchParams<{
     durationSec?: string;
+    exerciseId: string;
+    exerciseTitle?: string;
     programId: string;
+    programTitle?: string;
     stepCount?: string;
   }>();
-  const program =
-    EXERCISE_PROGRAMS.find((item) => item.id === params.programId) ?? null;
   const completedDurationSec = parsePositiveInteger(params.durationSec);
   const completedStepCount = parsePositiveInteger(params.stepCount);
   const patientName = intakeProfile?.fullName ?? profile?.fullName ?? "You";
-
-  if (program === null) {
-    return (
-      <SafeAreaView
-        style={[styles.safeArea, { backgroundColor: colors.background }]}
-      >
-        <View style={styles.emptyState}>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Celebration unavailable
-          </Text>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            We could not load the finished session summary.
-          </Text>
-          <Link asChild href="/(tabs)/dashboard">
-            <AppButton label="Return home" />
-          </Link>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const exerciseTitle = parseRouteString(params.exerciseTitle) ?? "your exercise";
+  const programTitle = parseRouteString(params.programTitle) ?? "Exercise program";
 
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       style={[styles.safeArea, { backgroundColor: colors.background }]}
     >
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        <AppBackButton
+          label="Back to exercise"
+          onPress={() =>
+            router.replace(
+              `/programs/${params.programId}/exercises/${params.exerciseId}`,
+            )
+          }
+        />
+
         <View
           style={[
             styles.heroCard,
@@ -89,21 +93,24 @@ export default function SessionCompleteScreen() {
             <Ionicons color={colors.accentContrast} name="sparkles" size={22} />
           </View>
           <Text style={[styles.eyebrow, { color: colors.accent }]}>
-            Session complete
+            Exercise complete
           </Text>
           <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>
             Nice work, {patientName}.
           </Text>
           <Text style={[styles.heroText, { color: colors.textSecondary }]}>
-            You finished {program.title.toLowerCase()} and added another
-            positive rehab session to your routine.
+            You finished {exerciseTitle.toLowerCase()} inside {programTitle.toLowerCase()}.
           </Text>
         </View>
 
         <ArtworkPanel
-          illustration={program.coverImage}
-          subtitle={`${program.focusAreaLabel} • ${program.difficultyLabel}`}
-          title={program.title}
+          illustration={{
+            background: colors.accentSoft,
+            icon: "sparkles",
+            tint: colors.accent,
+          }}
+          subtitle={programTitle}
+          title={exerciseTitle}
         />
 
         <View style={styles.metricsRow}>
@@ -120,7 +127,7 @@ export default function SessionCompleteScreen() {
               <Text
                 style={[styles.metricLabel, { color: colors.textSecondary }]}
               >
-                Time completed
+                Total duration
               </Text>
             </View>
           </AppCard>
@@ -137,37 +144,21 @@ export default function SessionCompleteScreen() {
               <Text
                 style={[styles.metricLabel, { color: colors.textSecondary }]}
               >
-                Steps finished
+                Steps completed
               </Text>
             </View>
           </AppCard>
         </View>
 
-        <AppCard>
-          <View style={styles.messagePanel}>
-            <Text style={[styles.panelTitle, { color: colors.textPrimary }]}>
-              Keep the momentum going
-            </Text>
-            <Text style={[styles.panelText, { color: colors.textSecondary }]}>
-              Short, consistent sessions build better comfort and confidence
-              than pushing through everything at once.
-            </Text>
-            <View style={styles.tipRow}>
-              <Ionicons color={colors.accent} name="heart-circle" size={22} />
-              <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-                Revisit this program anytime or explore another no-equipment
-                routine.
-              </Text>
-            </View>
-          </View>
-        </AppCard>
-
         <View style={styles.actions}>
-          <Link asChild href="/(tabs)/dashboard">
-            <AppButton label="Back to dashboard" />
+          <Link asChild href="/programs">
+            <AppButton label="Back to programs" />
           </Link>
-          <Link asChild href="/(tabs)/exercises">
-            <AppButton label="More exercises" variant="secondary" />
+          <Link
+            asChild
+            href={`/programs/${params.programId}/exercises/${params.exerciseId}`}
+          >
+            <AppButton label="Review exercise" variant="secondary" />
           </Link>
         </View>
       </ScrollView>
@@ -238,46 +229,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  messagePanel: {
-    gap: 12,
-  },
-  panelTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-  },
-  panelText: {
-    fontSize: 15,
-    lineHeight: 23,
-  },
-  tipRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 10,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 21,
-  },
   actions: {
     flexDirection: "row",
     gap: 12,
-  },
-  emptyState: {
-    alignItems: "center",
-    flex: 1,
-    gap: 12,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: "800",
-    textAlign: "center",
-  },
-  emptyText: {
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: "center",
   },
 });

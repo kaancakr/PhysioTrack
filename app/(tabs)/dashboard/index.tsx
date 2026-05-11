@@ -90,6 +90,7 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       style={[styles.safeArea, { backgroundColor: colors.background }]}
     >
       <ScrollView
@@ -296,7 +297,7 @@ export default function DashboardScreen() {
                       size={64}
                     />
                   </View>
-                  <Link asChild href={`/session/${recommendedProgram.id}`}>
+                  <Link asChild href={`/programs/${recommendedProgram.id}`}>
                     <Pressable
                       style={[
                         styles.playButton,
@@ -518,11 +519,11 @@ export default function DashboardScreen() {
                   width < 420 ? styles.buttonColumn : null,
                 ]}
               >
-                <Link asChild href={`/exercise/${recommendedProgram.id}`}>
+                <Link asChild href={`/programs/${recommendedProgram.id}`}>
                   <AppButton label="View program" />
                 </Link>
-                <Link asChild href={`/session/${recommendedProgram.id}`}>
-                  <AppButton label="Start session" variant="secondary" />
+                <Link asChild href={`/programs/${recommendedProgram.id}`}>
+                  <AppButton label="Open exercises" variant="secondary" />
                 </Link>
               </View>
             </View>
@@ -547,8 +548,8 @@ export default function DashboardScreen() {
                     {activeProgram.steps.length}
                   </Text>
                 </View>
-                <Link asChild href={`/session/${activeProgram.id}`}>
-                  <AppButton label="Continue current session" />
+                <Link asChild href={`/programs/${activeProgram.id}`}>
+                  <AppButton label="Open active program" />
                 </Link>
               </View>
             </AppCard>

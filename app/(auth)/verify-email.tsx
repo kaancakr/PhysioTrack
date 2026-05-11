@@ -1,9 +1,10 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import { Feather } from "@expo/vector-icons";
 import { AppButton } from "@/components/app-button";
 import { AppCard } from "@/components/app-card";
 import { ConfigNotice } from "@/components/config-notice";
+import { getAuthErrorMessage } from "@/lib/auth";
 import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
 
@@ -34,6 +36,22 @@ export default function VerifyEmailScreen() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [countdown, setCountdown] = useState(45);
+  const codeInputRef = useRef<TextInput | null>(null);
+
+  useEffect(() => {
+    let timer: any;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
+
+  const focusCodeInput = () => {
+    codeInputRef.current?.focus();
+  };
 
   const handleVerify = async () => {
     try {
@@ -45,9 +63,7 @@ export default function VerifyEmailScreen() {
       setIsSubmitting(false);
       router.replace("/(tabs)/dashboard");
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("auth.errors.unknownVerify");
-      setFormError(message);
+      setFormError(getAuthErrorMessage(error, t("auth.errors.unknownVerify")));
       setIsSubmitting(false);
     }
   };
@@ -60,11 +76,10 @@ export default function VerifyEmailScreen() {
       await resendSignupCode();
       setSuccessMessage(t("auth.verifyEmail.resendSuccess"));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("auth.errors.unknownResend");
-      setFormError(message);
+      setFormError(getAuthErrorMessage(error, t("auth.errors.unknownResend")));
     } finally {
       setIsResending(false);
+      setCountdown(45);
     }
   };
 
@@ -95,7 +110,7 @@ export default function VerifyEmailScreen() {
                   {t("auth.verifyEmail.codeSentTo", { email: pendingSignupEmail })}
                 </Text>
               ) : null}
-              <View style={styles.codeInputContainer}>
+              <Pressable onPress={focusCodeInput} style={styles.codeInputContainer}>
                 {[0, 1, 2, 3, 4, 5].map((index) => (
                   <View
                     key={index}
@@ -114,13 +129,14 @@ export default function VerifyEmailScreen() {
                 ))}
                 <TextInput
                   autoFocus
+                  ref={codeInputRef}
                   keyboardType="number-pad"
                   maxLength={6}
                   onChangeText={setCode}
                   style={styles.hiddenInput}
                   value={code}
                 />
-              </View>
+              </Pressable>
               {formError !== null ? (
                 <Text style={[styles.feedbackText, { color: colors.danger }]}>{formError}</Text>
               ) : null}
@@ -141,10 +157,12 @@ export default function VerifyEmailScreen() {
               />
 
               <AppButton
-                disabled={isResending}
+                disabled={isResending || countdown > 0}
                 label={
                   isResending
                     ? t("auth.verifyEmail.sendingLabel")
+                    : countdown > 0
+                    ? t("auth.verifyEmail.resendWaitLabel", { seconds: countdown })
                     : t("auth.verifyEmail.resendLabel")
                 }
                 onPress={handleResend}
