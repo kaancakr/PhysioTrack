@@ -89,8 +89,7 @@
         "5": "5 sessions"
       }
     }
-  }
-  ,
+  },
   "auth": {
     "fields": {
       "emailLabel": "Email",
@@ -139,6 +138,70 @@
       "verifiedSuccess": "Your email has been verified.",
       "resendSuccess": "A new verification code has been sent.",
       "changeEmail": "Change email address"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "heroSummaryFallback": "Your recovery preferences will appear here.",
+    "unknownUser": "Unknown user",
+    "emptyValue": "Not set",
+    "emailVerified": "Email verified",
+    "emailNotVerified": "Email not verified",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "editProfile": "Edit profile",
+    "progressSection": "Progress",
+    "programsMetric": "Programs",
+    "exercisesMetric": "Exercises",
+    "stepsMetric": "Steps",
+    "programsSubtitle": "Your guided programs completed so far.",
+    "exercisesSubtitle": "Exercise milestones across all programs.",
+    "stepsSubtitle": "Step-by-step recovery actions completed.",
+    "progressPercent": "{{percent}} complete",
+    "statusMetric": "Plan status",
+    "planFinished": "Finished",
+    "planInProgress": "In progress",
+    "accountSection": "Account",
+    "planSection": "Recovery plan",
+    "appearanceSection": "Appearance",
+    "supportSection": "Support",
+    "fullName": "Full name",
+    "email": "Email",
+    "focusArea": "Focus area",
+    "weeklyGoal": "Weekly rhythm",
+    "dailyStepGoal": "Daily step goal",
+    "dailyStepsValue": "{{count}} steps",
+    "sendFeedback": "Send feedback",
+    "sendFeedbackHint": "Share ideas, bugs, or anything that felt confusing.",
+    "rateApp": "Rate the app",
+    "rateAppHint": "Help more people discover PhysioTrack.",
+    "signOut": "Sign out",
+    "signingOut": "Signing out...",
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "edit": {
+      "eyebrow": "Profile settings",
+      "title": "Edit your plan",
+      "fullNamePlaceholder": "Jamie Patient",
+      "ageTitle": "Age range",
+      "ageHint": "Keep your age range current so the profile stays aligned with your intake data.",
+      "genderTitle": "Gender",
+      "genderHint": "This preference is included in your recovery profile.",
+      "focusAreaTitle": "Focus area",
+      "focusAreaHint": "Choose the area where you want the most support right now.",
+      "weeklyGoalTitle": "Weekly rhythm",
+      "weeklyGoalHint": "Adjust how many guided sessions you want each week.",
+      "dailyStepGoalTitle": "Daily step goal",
+      "dailyStepGoalHint": "Pick a walking target that feels realistic for your routine.",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "validation": {
+        "fullNameRequired": "Please enter your full name.",
+        "saveFailed": "We could not save your profile."
+      }
     }
   }
 }

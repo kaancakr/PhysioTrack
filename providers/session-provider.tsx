@@ -37,6 +37,7 @@ import {
 } from "@/lib/storage";
 import {
   type AuthTokenPair,
+  type BackendOverallProgress,
   type BackendUser,
   type LoginRequestPayload,
   type LogoutRequestPayload,
@@ -48,7 +49,11 @@ import {
   type UpdateProfileRequestPayload,
   type VerifySignupCodeRequestPayload,
 } from "@/types/auth";
-import { type UserIntakeProfile, type UserProfile } from "@/types/domain";
+import {
+  type UserIntakeProfile,
+  type UserOverallProgress,
+  type UserProfile,
+} from "@/types/domain";
 
 const AUTH_BYPASS_ENABLED = false;
 const BYPASS_PROFILE: UserProfile = {
@@ -58,6 +63,15 @@ const BYPASS_PROFILE: UserProfile = {
   isActive: true,
   isEmailVerified: true,
   isStaff: false,
+  overallProgress: {
+    completedExercisesCount: 0,
+    completedProgramsCount: 0,
+    completedStepsCount: 0,
+    exercisesCount: 0,
+    isFinished: false,
+    programsCount: 0,
+    stepsCount: 0,
+  },
 };
 
 type AppSession = {
@@ -115,6 +129,20 @@ function buildMissingConfigurationError(action: string) {
   return `${action} is unavailable. ${getBackendConfigurationError()}`;
 }
 
+function mapBackendOverallProgressToOverallProgress(
+  backendProgress: BackendOverallProgress | null,
+) {
+  return {
+    completedExercisesCount: backendProgress?.completed_exercises_count ?? 0,
+    completedProgramsCount: backendProgress?.completed_programs_count ?? 0,
+    completedStepsCount: backendProgress?.completed_steps_count ?? 0,
+    exercisesCount: backendProgress?.exercises_count ?? 0,
+    isFinished: backendProgress?.is_finished ?? false,
+    programsCount: backendProgress?.programs_count ?? 0,
+    stepsCount: backendProgress?.steps_count ?? 0,
+  } satisfies UserOverallProgress;
+}
+
 function mapBackendUserToProfile(user: BackendUser) {
   return {
     email: user.email,
@@ -123,6 +151,9 @@ function mapBackendUserToProfile(user: BackendUser) {
     isActive: user.is_active,
     isEmailVerified: user.is_email_verified,
     isStaff: user.is_staff,
+    overallProgress: mapBackendOverallProgressToOverallProgress(
+      user.overall_progress,
+    ),
   } satisfies UserProfile;
 }
 

@@ -33,6 +33,17 @@ export type UserProfile = {
   isActive: boolean;
   isEmailVerified: boolean;
   isStaff: boolean;
+  overallProgress: UserOverallProgress;
+};
+
+export type UserOverallProgress = {
+  completedExercisesCount: number;
+  completedProgramsCount: number;
+  completedStepsCount: number;
+  exercisesCount: number;
+  isFinished: boolean;
+  programsCount: number;
+  stepsCount: number;
 };
 
 export type WeeklyGoal = 2 | 3 | 4 | 5;

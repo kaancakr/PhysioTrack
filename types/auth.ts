@@ -19,12 +19,23 @@ export type BackendUserProfile = {
   weekly_goal: WeeklyGoal;
 };
 
+export type BackendOverallProgress = {
+  completed_exercises_count: number;
+  completed_programs_count: number;
+  completed_steps_count: number;
+  exercises_count: number;
+  is_finished: boolean;
+  programs_count: number;
+  steps_count: number;
+};
+
 export type BackendUser = {
   email: string;
   id: string;
   is_active: boolean;
   is_email_verified: boolean;
   is_staff: boolean;
+  overall_progress: BackendOverallProgress | null;
   profile: BackendUserProfile | null;
 };
 
