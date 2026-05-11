@@ -7,12 +7,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppButton } from "@/components/app-button";
 import { AppleAuthButton } from "@/components/apple-auth-button";
+import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
 
 export default function WelcomeScreen() {
   const { colors } = useAppTheme();
+  const { hasCompletedGuestOnboarding } = useSession();
   const [appleAuthError, setAppleAuthError] = useState<string | null>(null);
   const { t } = useTranslation();
+  const createAccountHref = hasCompletedGuestOnboarding
+    ? "/(auth)/signup"
+    : "/onboarding";
 
   return (
     <SafeAreaView
@@ -51,7 +56,7 @@ export default function WelcomeScreen() {
               {appleAuthError}
             </Text>
           ) : null}
-          <Link asChild href="/(auth)/signup">
+          <Link asChild href={createAccountHref}>
             <AppButton label={t("welcome.createAccount")} />
           </Link>
           <Link asChild href="/(auth)/login">

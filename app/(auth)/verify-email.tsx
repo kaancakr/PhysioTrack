@@ -1,9 +1,10 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -36,6 +37,7 @@ export default function VerifyEmailScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(45);
+  const codeInputRef = useRef<TextInput | null>(null);
 
   useEffect(() => {
     let timer: any;
@@ -46,6 +48,10 @@ export default function VerifyEmailScreen() {
     }
     return () => clearInterval(timer);
   }, [countdown]);
+
+  const focusCodeInput = () => {
+    codeInputRef.current?.focus();
+  };
 
   const handleVerify = async () => {
     try {
@@ -104,7 +110,7 @@ export default function VerifyEmailScreen() {
                   {t("auth.verifyEmail.codeSentTo", { email: pendingSignupEmail })}
                 </Text>
               ) : null}
-              <View style={styles.codeInputContainer}>
+              <Pressable onPress={focusCodeInput} style={styles.codeInputContainer}>
                 {[0, 1, 2, 3, 4, 5].map((index) => (
                   <View
                     key={index}
@@ -123,13 +129,14 @@ export default function VerifyEmailScreen() {
                 ))}
                 <TextInput
                   autoFocus
+                  ref={codeInputRef}
                   keyboardType="number-pad"
                   maxLength={6}
                   onChangeText={setCode}
                   style={styles.hiddenInput}
                   value={code}
                 />
-              </View>
+              </Pressable>
               {formError !== null ? (
                 <Text style={[styles.feedbackText, { color: colors.danger }]}>{formError}</Text>
               ) : null}

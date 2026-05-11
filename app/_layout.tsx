@@ -32,6 +32,7 @@ function NavigationGate() {
     const isOnboardingRoute = topSegment === "onboarding";
     const authSubRoute = segments[1];
     const isLoginRoute = isAuthRoute && authSubRoute === "login";
+    const isWelcomeRoute = isAuthRoute && authSubRoute === "welcome";
     const isVerifyEmailRoute = isAuthRoute && authSubRoute === "verify-email";
 
     const isProtectedAppRoute = isTabRoute;
@@ -42,17 +43,19 @@ function NavigationGate() {
       if (isVerifyEmailRoute && pendingSignupEmail === null) {
         router.replace("/(auth)/signup");
       } else if (
-        shouldRedirectSignedOutUserToWelcome &&
-        !isAuthRoute
-      ) {
-        router.replace("/(auth)/welcome");
-      } else if (
-        !shouldRedirectSignedOutUserToWelcome &&
         !hasCompletedGuestOnboarding &&
         !isOnboardingRoute &&
-        !isLoginRoute
+        !isLoginRoute &&
+        !isWelcomeRoute &&
+        !isVerifyEmailRoute
       ) {
         router.replace("/onboarding");
+      } else if (
+        shouldRedirectSignedOutUserToWelcome &&
+        !isAuthRoute &&
+        !isOnboardingRoute
+      ) {
+        router.replace("/(auth)/welcome");
       } else if (hasCompletedGuestOnboarding && !isAuthRoute) {
         router.replace("/(auth)/welcome");
       }

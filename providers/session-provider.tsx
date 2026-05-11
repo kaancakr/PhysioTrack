@@ -620,7 +620,7 @@ export function SessionProvider(props: PropsWithChildren) {
   const signOut = useCallback(async () => {
     if (isTestingBypassEnabled) {
       clearAuthTokenPair();
-      setHasCompletedGuestOnboarding(true);
+      setHasCompletedGuestOnboarding(false);
       setIntakeProfile(null);
       setPendingSignupEmail(null);
       setProfile(null);
@@ -637,7 +637,7 @@ export function SessionProvider(props: PropsWithChildren) {
     if (storedTokenPair === null) {
       await clearAllStoredData();
       clearAuthTokenPair();
-      setHasCompletedGuestOnboarding(true);
+      setHasCompletedGuestOnboarding(false);
       setIntakeProfile(null);
       setPendingSignupEmail(null);
       setProfile(null);
@@ -662,7 +662,7 @@ export function SessionProvider(props: PropsWithChildren) {
     }
     await clearAllStoredData();
     clearAuthTokenPair();
-    setHasCompletedGuestOnboarding(true);
+    setHasCompletedGuestOnboarding(false);
     setIntakeProfile(null);
     setPendingSignupEmail(null);
     setProfile(null);
