@@ -2,14 +2,18 @@ import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   ActivityIndicator,
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { AppButton } from "@/components/app-button";
 import { AppBackButton } from "@/components/app-back-button";
@@ -112,6 +116,45 @@ export default function ExerciseDetailScreen() {
     void loadExercise();
   }, [isFocused, params.exerciseId, params.programId]);
 
+  const handleToggleFavorite = async () => {
+    if (!exercise) return;
+
+    if (exercise.isFavorite) {
+      Alert.alert(
+        "Remove from favorites",
+        "Are you sure you want to remove this exercise from your favorites?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: () => performToggle(),
+          },
+        ],
+      );
+    } else {
+      await performToggle();
+    }
+  };
+
+  const performToggle = async () => {
+    if (!exercise) return;
+
+    try {
+      const path = `/api/auth/programs/${params.programId}/exercises/${exercise.id}/favorite`;
+      await requestAuthJson(path, {
+        method: "POST",
+        body: JSON.stringify({ is_favorite: !exercise.isFavorite }),
+      });
+
+      setExercise((current) =>
+        current ? { ...current, isFavorite: !current.isFavorite } : null,
+      );
+    } catch (error) {
+      Alert.alert("Error", "Could not update favorite status.");
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView
@@ -168,260 +211,179 @@ export default function ExerciseDetailScreen() {
     currentStep.stepIndex,
   );
   const isNextRequiredStep = exercise.progress.nextStepIndex === currentStep.stepIndex;
-  const currentImageSource =
-    currentStep.image.url ?? currentStep.image.thumbnailUrl;
+  const currentImageSource = currentStep.image.url;
 
   return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.safeArea}>
+      <LinearGradient
+        colors={["#E8F5E9", "#F1F8E9", "#FFFFFF"]}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView
+        edges={["top", "left", "right"]}
+        style={{ flex: 1 }}
       >
-        <AppBackButton
-          label="Back to program"
-          onPress={() => router.replace(`/programs/${params.programId}`)}
-        />
-
-        <ArtworkPanel
-          illustration={exercise.illustration}
-          subtitle={`${exercise.programTitle} • ${formatDuration(exercise.totalDurationSec)} • ${buildProgressCopy(exercise)}`}
-          title={exercise.title}
-        />
-
-        <AppCard>
-          <View style={styles.summary}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Exercise overview
-            </Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
-              {exercise.description ??
-                "Move through the steps in order and review each movement before starting the guided timer."}
-            </Text>
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                  {exercise.bodyArea ?? "general"}
-                </Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                  {exercise.progress.completedStepsCount}/
-                  {exercise.progress.stepsCount} steps
-                </Text>
-              </View>
-              {prescription.length > 0 ? (
-                <View style={styles.metaItem}>
-                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                    {prescription}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          </View>
-        </AppCard>
-
-        <AppCard>
-          <View style={styles.summary}>
-            <View style={styles.stepPreviewHeader}>
-              <View>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                  Movement step
-                </Text>
-                <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
-                  Step {previewStepIndex + 1} of {exercise.steps.length}
-                </Text>
-              </View>
-              <Text
-                style={[
-                  styles.stepState,
-                  {
-                    color: isCompleted
-                      ? colors.success
-                      : isNextRequiredStep
-                        ? colors.accent
-                        : colors.textMuted,
-                  },
-                ]}
-              >
-                {isCompleted ? "Completed" : isNextRequiredStep ? "Next" : "Preview"}
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.stepImageFrame,
-                {
-                  backgroundColor: colors.surfaceMuted,
-                  borderColor: colors.border,
-                },
-              ]}
+        <View style={{ paddingHorizontal: 20 }}>
+          <View style={styles.dribbbleHeader}>
+            <Pressable 
+              style={styles.dribbbleHeaderButton}
+              onPress={() => router.replace(`/programs/${params.programId}`)}
             >
-              {currentImageSource !== null ? (
-                <Image
-                  resizeMode="cover"
-                  source={{ uri: currentImageSource }}
-                  style={styles.stepImage}
-                />
-              ) : (
-                <View style={styles.stepImagePlaceholder}>
-                  <Text
-                    style={[styles.placeholderTitle, { color: colors.textPrimary }]}
-                  >
-                    Step visual coming soon
-                  </Text>
-                  <Text
-                    style={[styles.placeholderText, { color: colors.textSecondary }]}
-                  >
-                    {currentStep.image.alt ?? currentStep.instruction}
+              <Feather name="chevron-left" size={24} color="#333" />
+            </Pressable>
+            <View style={styles.dribbbleHeaderCenter}>
+              <Text style={styles.dribbbleHeaderSubtitle}>Exercise</Text>
+              <Text style={styles.dribbbleHeaderTitle} numberOfLines={1}>{exercise.title}</Text>
+            </View>
+            <Pressable 
+              style={styles.dribbbleHeaderButton}
+              onPress={handleToggleFavorite}
+            >
+              <Ionicons
+                color={exercise.isFavorite ? "#FF5E5E" : "#333"}
+                name={exercise.isFavorite ? "heart" : "heart-outline"}
+                size={22}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.dribbbleCard}>
+            <View style={styles.summary}>
+              <Text style={styles.dribbbleSectionTitle}>Exercise overview</Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
+                {exercise.description ??
+                  "Move through the steps in order and review each movement before starting the guided timer."}
+              </Text>
+              <View style={styles.dribbbleMetaRow}>
+                <View style={styles.dribbbleMetaItem}>
+                  <Ionicons name="body-outline" size={14} color="#A0A0A0" />
+                  <Text style={styles.dribbbleMetaText}>
+                    {exercise.bodyArea ?? "general"}
                   </Text>
                 </View>
-              )}
-            </View>
-
-            <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-                {currentStep.title}
-              </Text>
-              <Text
-                style={[styles.stepInstruction, { color: colors.textSecondary }]}
-              >
-                {currentStep.instruction}
-              </Text>
-              <Text style={[styles.stepMeta, { color: colors.textMuted }]}>
-                {formatDuration(currentStep.durationSec)}
-              </Text>
-            </View>
-
-            <View style={styles.stepNavigation}>
-              <AppButton
-                disabled={previewStepIndex === 0}
-                label="Previous step"
-                onPress={() => {
-                  setPreviewStepIndex((currentValue) => {
-                    return Math.max(currentValue - 1, 0);
-                  });
-                }}
-                variant="secondary"
-              />
-              <AppButton
-                disabled={previewStepIndex >= exercise.steps.length - 1}
-                label="Next step"
-                onPress={() => {
-                  setPreviewStepIndex((currentValue) => {
-                    return Math.min(currentValue + 1, exercise.steps.length - 1);
-                  });
-                }}
-                variant="secondary"
-              />
+                <View style={styles.dribbbleMetaItem}>
+                  <Ionicons name="list-outline" size={14} color="#A0A0A0" />
+                  <Text style={styles.dribbbleMetaText}>
+                    {exercise.progress.stepsCount} steps
+                  </Text>
+                </View>
+                {prescription.length > 0 ? (
+                  <View style={styles.dribbbleMetaItem}>
+                    <Ionicons name="repeat-outline" size={14} color="#A0A0A0" />
+                    <Text style={styles.dribbbleMetaText}>{prescription}</Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
           </View>
-        </AppCard>
 
-        {exercise.metadata.safetyFlags.length > 0 ? (
-          <AppCard>
+          <View style={styles.dribbbleCard}>
             <View style={styles.summary}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Safety notes
-              </Text>
-              <View style={styles.tagList}>
-                {exercise.metadata.safetyFlags.map((flag) => (
-                  <View
-                    key={flag}
-                    style={[
-                      styles.tag,
-                      {
-                        backgroundColor: colors.surfaceMuted,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                      {flag}
+              <View style={styles.stepPreviewHeader}>
+                <View>
+                  <Text style={styles.dribbbleSectionTitle}>Movement step</Text>
+                  <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
+                    Step {previewStepIndex + 1} of {exercise.steps.length}
+                  </Text>
+                </View>
+                <View style={[styles.dribbbleStatusBadge, isCompleted && styles.dribbbleStatusBadgeSuccess]}>
+                   <Text style={[styles.dribbbleStatusText, isCompleted && styles.dribbbleStatusTextSuccess]}>
+                     {isCompleted ? "Completed" : isNextRequiredStep ? "Next" : "Preview"}
+                   </Text>
+                </View>
+              </View>
+
+              <View style={styles.dribbbleImageFrame}>
+                {currentImageSource !== null ? (
+                  <Image
+                    resizeMode="cover"
+                    source={{ uri: currentImageSource }}
+                    style={styles.stepImage}
+                  />
+                ) : (
+                  <View style={styles.stepImagePlaceholder}>
+                    <Ionicons name="image-outline" size={48} color="#A0A0A0" />
+                    <Text style={[styles.placeholderText, { marginTop: 12, color: colors.textSecondary }]}>
+                      Visual coming soon
                     </Text>
                   </View>
-                ))}
+                )}
+                <LinearGradient
+                   colors={["transparent", "rgba(0,0,0,0.4)"]}
+                   style={styles.dribbbleImageOverlay}
+                />
+              </View>
+
+              <View style={styles.stepContent}>
+                <Text style={styles.dribbbleStepTitle}>{currentStep.title}</Text>
+                <Text style={[styles.stepInstruction, { color: colors.textSecondary }]}>
+                  {currentStep.instruction}
+                </Text>
+              </View>
+
+              <View style={styles.dribbbleStepNavigation}>
+                <Pressable
+                  disabled={previewStepIndex === 0}
+                  onPress={() => setPreviewStepIndex(v => Math.max(v - 1, 0))}
+                  style={[styles.dribbbleNavBtn, previewStepIndex === 0 && { opacity: 0.5 }]}
+                >
+                  <Feather name="chevron-left" size={24} color="#333" />
+                </Pressable>
+                
+                <View style={styles.dribbbleNavCenter}>
+                   {exercise.steps.map((_, idx) => (
+                     <View 
+                       key={idx} 
+                       style={[
+                         styles.dribbbleNavDot, 
+                         idx === previewStepIndex && styles.dribbbleNavDotActive
+                       ]} 
+                     />
+                   ))}
+                </View>
+
+                <Pressable
+                  disabled={previewStepIndex >= exercise.steps.length - 1}
+                  onPress={() => setPreviewStepIndex(v => Math.min(v + 1, exercise.steps.length - 1))}
+                  style={[styles.dribbbleNavBtn, previewStepIndex >= exercise.steps.length - 1 && { opacity: 0.5 }]}
+                >
+                  <Feather name="chevron-right" size={24} color="#333" />
+                </Pressable>
               </View>
             </View>
-          </AppCard>
-        ) : null}
-
-        {exercise.metadata.equipment.length > 0 ||
-        exercise.metadata.primaryTargets.length > 0 ||
-        exercise.metadata.therapeuticGoals.length > 0 ||
-        exercise.metadata.movementType !== null ? (
-          <AppCard>
-            <View style={styles.summary}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Therapy details
-              </Text>
-              {exercise.metadata.movementType !== null ? (
-                <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
-                  Movement type: {formatLabel(exercise.metadata.movementType)}
-                </Text>
-              ) : null}
-              {exercise.metadata.equipment.length > 0 ? (
-                <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
-                  Equipment: {exercise.metadata.equipment.map(formatLabel).join(", ")}
-                </Text>
-              ) : null}
-              {exercise.metadata.primaryTargets.length > 0 ? (
-                <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
-                  Primary targets:{" "}
-                  {exercise.metadata.primaryTargets.map(formatLabel).join(", ")}
-                </Text>
-              ) : null}
-              {exercise.metadata.therapeuticGoals.length > 0 ? (
-                <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
-                  Therapeutic goals:{" "}
-                  {exercise.metadata.therapeuticGoals
-                    .map(formatLabel)
-                    .join(", ")}
-                </Text>
-              ) : null}
-            </View>
-          </AppCard>
-        ) : null}
-
-        <AppCard>
-          <View style={styles.actionPanel}>
-            <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>
-              Guided completion
-            </Text>
-            <Text style={[styles.actionText, { color: colors.textSecondary }]}>
-              Start the timed guided flow to progress automatically through the
-              next required movement step, or preview steps manually here first.
-            </Text>
-            <AppButton
-              label={
-                exercise.progress.isFinished
-                  ? "Repeat exercise"
-                  : "Open guided session"
-              }
-              onPress={() => {
-                router.push(
-                  `/programs/${exercise.programId}/exercises/${exercise.id}/session`,
-                );
-              }}
-            />
           </View>
-        </AppCard>
+
+          <View style={styles.dribbbleActionCard}>
+             <View>
+                <Text style={styles.dribbbleActionTitle}>Ready to start?</Text>
+                <Text style={styles.dribbbleActionSubtitle}>Follow the guided timer</Text>
+             </View>
+             <Pressable 
+               style={styles.dribbbleStartBtn}
+               onPress={() => router.push(`/programs/${exercise.programId}/exercises/${exercise.id}/session`)}
+             >
+                <Feather name="play" size={24} color="#FFF" />
+             </Pressable>
+          </View>
+
       </ScrollView>
     </SafeAreaView>
+  </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    gap: 16,
-    paddingBottom: 32,
+  safeArea: { flex: 1 },
+  scrollContent: {
+    gap: 20,
+    paddingBottom: 40,
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 10,
   },
   emptyState: {
     alignItems: "center",
@@ -439,63 +401,203 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
   },
+  dribbbleHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  dribbbleHeaderButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF80",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dribbbleHeaderCenter: {
+    alignItems: "center",
+    flex: 1,
+    marginHorizontal: 12,
+  },
+  dribbbleHeaderSubtitle: {
+    fontSize: 12,
+    color: "#66BB6A",
+    fontWeight: "600",
+  },
+  dribbbleHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#333",
+  },
+  dribbbleCard: {
+    backgroundColor: "#FFFFFFCC",
+    borderRadius: 30,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  dribbbleSectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#333",
+    marginBottom: 8,
+  },
+  dribbbleMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginTop: 12,
+  },
+  dribbbleMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  dribbbleMetaText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#666",
+  },
+  stepPreviewHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 20,
+  },
+  dribbbleStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: "#FFF8E1",
+  },
+  dribbbleStatusBadgeSuccess: {
+    backgroundColor: "#E8F5E9",
+  },
+  dribbbleStatusText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#FBC02D",
+  },
+  dribbbleStatusTextSuccess: {
+    color: "#4CAF50",
+  },
+  dribbbleImageFrame: {
+    borderRadius: 30,
+    height: 240,
+    width: "100%",
+    overflow: "hidden",
+    backgroundColor: "#F0F0F0",
+    position: "relative",
+  },
+  stepImage: {
+    width: "100%",
+    height: "100%",
+  },
+  dribbbleImageOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+  },
+  stepImagePlaceholder: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dribbbleStepTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#333",
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  stepInstruction: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: "#666",
+  },
+  dribbbleStepNavigation: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#F5F5F5",
+  },
+  dribbbleNavBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dribbbleNavCenter: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  dribbbleNavDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#E0E0E0",
+  },
+  dribbbleNavDotActive: {
+    width: 20,
+    backgroundColor: "#4EAF63",
+  },
+  dribbbleActionCard: {
+    backgroundColor: "#1C1E21",
+    borderRadius: 30,
+    padding: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  dribbbleActionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#FFF",
+  },
+  dribbbleActionSubtitle: {
+    fontSize: 14,
+    color: "#A0A0A0",
+    marginTop: 2,
+  },
+  dribbbleStartBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#4EAF63",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#4EAF63",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
   summary: {
     gap: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
   },
   description: {
     fontSize: 15,
     lineHeight: 24,
   },
-  metaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 18,
-  },
-  metaItem: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-  },
-  metaText: {
+  detailLine: {
     fontSize: 14,
-    fontWeight: "600",
-    textTransform: "capitalize",
-  },
-  stepPreviewHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  stepState: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  stepImageFrame: {
-    borderRadius: 22,
-    borderWidth: 1,
-    minHeight: 240,
-    overflow: "hidden",
-  },
-  stepImage: {
-    height: 240,
-    width: "100%",
-  },
-  stepImagePlaceholder: {
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 240,
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-  },
-  placeholderTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 8,
-    textAlign: "center",
+    lineHeight: 22,
   },
   placeholderText: {
     fontSize: 14,
@@ -503,50 +605,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   stepContent: {
-    gap: 8,
-  },
-  stepNavigation: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  stepTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  stepInstruction: {
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  stepMeta: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  tagList: {
-    gap: 10,
-  },
-  tag: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  tagText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  detailLine: {
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  actionPanel: {
-    gap: 12,
-  },
-  actionTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  actionText: {
-    fontSize: 14,
-    lineHeight: 22,
+    width: "100%",
   },
 });

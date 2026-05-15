@@ -36,6 +36,7 @@ export type ExerciseSummary = {
   description: string | null;
   exerciseOrder: number | null;
   id: string;
+  isFavorite: boolean;
   progress: ExerciseProgress;
   title: string;
   totalDurationSec: number;
@@ -90,6 +91,7 @@ export type ExerciseDetail = {
   description: string | null;
   id: string;
   illustration: ExerciseIllustration;
+  isFavorite: boolean;
   metadata: ExerciseMetadata;
   programId: string;
   programTitle: string;
@@ -411,6 +413,7 @@ function normalizeExerciseSummary(exercise: unknown): ExerciseSummary {
     description: readString(exerciseObject.description),
     exerciseOrder: readNumber(exerciseObject.exercise_order),
     id: idValue,
+    isFavorite: readBoolean(exerciseObject.is_favorite) ?? false,
     progress: normalizeExerciseProgress(progressSource),
     title: readString(exerciseObject.title) ?? "Untitled exercise",
     totalDurationSec: readNumber(exerciseObject.total_duration_sec) ?? 0,
@@ -491,6 +494,7 @@ function normalizeExerciseDetail(
       readString(exerciseObject.id) ??
       exerciseId,
     illustration: getExerciseIllustration(focusArea),
+    isFavorite: readBoolean(exerciseObject.is_favorite) ?? false,
     metadata: normalizeExerciseMetadata(asObject(exerciseObject.metadata)),
     programId,
     programTitle:

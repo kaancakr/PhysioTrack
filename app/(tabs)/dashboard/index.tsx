@@ -1,5 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useIsFocused } from "@react-navigation/native";
 import { Link, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -17,6 +19,7 @@ import { MetricRing } from "@/components/metric-ring";
 import { StatCard } from "@/components/stat-card";
 import { TrackingBars } from "@/components/tracking-bars";
 import { EXERCISE_PROGRAMS } from "@/data/exercise-programs";
+import { requestAuthJson } from "@/lib/auth";
 import { useProgress } from "@/providers/progress-provider";
 import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
@@ -29,19 +32,24 @@ const DASHBOARD_CATEGORIES = [
   { icon: "walk-outline", label: "Mobility" },
 ] as const;
 
-function buildCalendarDays() {
+function buildCalendarDays(selectedDate: number) {
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const today = new Date();
-  const currentDay = today.getDate();
 
   return Array.from({ length: 7 }, (_, index) => {
-    const dayNumber = currentDay - 2 + index;
+    const diff = index - 3;
+    const date = new Date(today);
+    date.setDate(today.getDate() + diff);
 
     return {
-      dayNumber,
-      isActive: index === 2,
+      dayName: days[date.getDay()],
+      dayNumber: date.getDate(),
+      isActive: date.getDate() === selectedDate,
     };
   });
 }
+
+
 
 export default function DashboardScreen() {
   const { colors, isDark } = useAppTheme();
@@ -73,7 +81,56 @@ export default function DashboardScreen() {
     totalMinutes / Math.max(20, weeklyGoal * 12),
   );
   const stepProgress = Math.min(1, (totalMinutes * 260) / dailyStepGoal);
-  const calendarDays = buildCalendarDays();
+  const [selectedDate, setSelectedDate] = useState<number>(new Date().getDate());
+  const calendarDays = buildCalendarDays(selectedDate);
+
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
+  const [currentLocalDate, setCurrentLocalDate] = useState<{ year: number; monthName: string; day: number; dayName: string }>(() => {
+    const today = new Date();
+    return {
+      year: today.getFullYear(),
+      monthName: today.toLocaleString('en-US', { month: 'long' }).toUpperCase(),
+      day: today.getDate(),
+      dayName: today.toLocaleString('en-US', { weekday: 'long' })
+    };
+  });
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (!isFocused) return;
+    if (!isFocused) return;
+
+    const fetchCalendar = async () => {
+      setIsCalendarLoading(true);
+      try {
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const year = today.getFullYear();
+        const path = `/api/auth/favorites/calendar?month=${month}&year=${year}`;
+        const data = await requestAuthJson<any>(path, { method: "GET" });
+
+        // The API returns month buckets. Let's assume it returns a list of events.
+        // We'll map them to the UI structure.
+        const events = Array.isArray(data) ? data : (data.results || data.items || []);
+
+        setCalendarEvents(events.map((ev: any) => ({
+          id: ev.id || ev.uuid,
+          date: ev.date || "22",
+          month: ev.month_label || ev.month || "Mar",
+          title: ev.title || "Exercise",
+          description: ev.description || "",
+          color: ev.color || (ev.is_favorite ? "#4EAF63" : "#FF5E5E"),
+        })));
+      } catch (error) {
+        console.error("Dashboard: Failed to fetch calendar", error);
+      } finally {
+        setIsCalendarLoading(false);
+      }
+    };
+
+    fetchCalendar();
+  }, [isFocused]);
   const recoveryBars = [
     {
       label: "Mobility",
@@ -139,50 +196,101 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          <View style={styles.calendarSection}>
+          {/* Dribbble Calendar Card */}
+          <View style={styles.dribbbleCard}>
+            <View style={styles.dribbbleCardHeader}>
+              <View>
+                <Text style={styles.dribbbleCardHeaderSubtitle}>
+                  {currentLocalDate.dayName}, {currentLocalDate.day}
+                </Text>
+                <Text style={styles.dribbbleCardHeaderTitle}>
+                  {currentLocalDate.year}
+                </Text>
+              </View>
+              <Text style={styles.dribbbleMonthText}>
+                {currentLocalDate.monthName}
+              </Text>
+            </View>
+
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.calendarRow}
+              contentContainerStyle={styles.dribbbleDatesScroll}
             >
               {calendarDays.map((day) => (
-                <View
+                <Pressable
                   key={day.dayNumber}
+                  onPress={() => setSelectedDate(day.dayNumber)}
                   style={[
-                    styles.calendarItem,
-                    {
-                      backgroundColor: day.isActive
-                        ? colors.accentSoft
-                        : colors.card,
-                      borderColor: day.isActive ? colors.accent : colors.border,
-                    },
+                    styles.dribbbleDateItem,
+                    day.isActive && styles.dribbbleDateItemSelected,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.calendarNumber,
-                      {
-                        color: day.isActive
-                          ? colors.accent
-                          : colors.textPrimary,
-                      },
+                      styles.dribbbleDayText,
+                      { color: day.isActive ? "#4EAF63" : "#A0A0A0" },
+                    ]}
+                  >
+                    {day.dayName}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.dribbbleDateText,
+                      { color: day.isActive ? "#4EAF63" : "#333" },
                     ]}
                   >
                     {day.dayNumber}
                   </Text>
-                  <View
-                    style={[
-                      styles.calendarDot,
-                      {
-                        backgroundColor: day.isActive
-                          ? colors.accent
-                          : "transparent",
-                      },
-                    ]}
-                  />
-                </View>
+                </Pressable>
               ))}
             </ScrollView>
+          </View>
+
+          {/* Dribbble Tasks Card */}
+          <View style={[styles.dribbbleCard, { marginTop: 16 }]}>
+            <View style={styles.dribbbleTaskHeader}>
+              <View>
+                <Text style={styles.dribbbleTaskSubtitle}>Event</Text>
+                <Text style={styles.dribbbleTaskTitle}>Task Schedule</Text>
+              </View>
+              <Pressable style={styles.dribbbleFilterButton}>
+                <Ionicons name="options-outline" size={20} color="#4EAF63" />
+              </Pressable>
+            </View>
+
+            <View style={styles.dribbbleEventsList}>
+              {calendarEvents.length > 0 ? (
+                calendarEvents.map((event) => (
+                  <View key={event.id} style={styles.dribbbleEventCard}>
+                    <View style={styles.dribbbleEventDateContainer}>
+                      <Text style={styles.dribbbleEventDateDay}>{event.date}</Text>
+                      <Text style={styles.dribbbleEventDateMonth}>{event.month}</Text>
+                    </View>
+
+                    <View style={styles.dribbbleDivider} />
+
+                    <View style={styles.dribbbleAvatarPlaceholder} />
+
+                    <View style={styles.dribbbleEventInfo}>
+                      <Text style={styles.dribbbleEventTitle}>{event.title}</Text>
+                      <View style={styles.dribbbleEventDescRow}>
+                        <View style={[styles.dribbbleDot, { backgroundColor: event.color }]} />
+                        <Text style={styles.dribbbleEventDesc} numberOfLines={1}>
+                          {event.description}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyEvents}>
+                  <Text style={styles.emptyEventsText}>
+                    {isCalendarLoading ? "Loading schedule..." : "No events scheduled for this month"}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
 
           <View style={styles.sectionStack}>
@@ -622,6 +730,161 @@ const styles = StyleSheet.create({
     height: 6,
     width: 6,
   },
+  // --- New Dribbble Layout Styles ---
+  dribbbleCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 32,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  dribbbleCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  dribbbleCardHeaderSubtitle: {
+    fontSize: 16,
+    color: "#888",
+    fontWeight: "500",
+  },
+  dribbbleCardHeaderTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#333",
+    marginTop: 2,
+  },
+  dribbbleMonthText: {
+    fontSize: 32,
+    fontWeight: "300",
+    color: "#4EAF63",
+    letterSpacing: 1,
+  },
+  dribbbleDatesScroll: {
+    gap: 8,
+    alignItems: "center",
+  },
+  dribbbleDateItem: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    gap: 6,
+    minWidth: 56,
+  },
+  dribbbleDateItemSelected: {
+    backgroundColor: "#4EAF6315", // 15% opacity of the new green color
+  },
+  dribbbleDayText: {
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  dribbbleDateText: {
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  dribbbleTaskHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 20,
+  },
+  dribbbleTaskSubtitle: {
+    fontSize: 14,
+    color: "#A0A0A0",
+    fontWeight: "500",
+  },
+  dribbbleTaskTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#333",
+    marginTop: 4,
+  },
+  dribbbleFilterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F2F7EC", // very light green
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dribbbleEventsList: {
+    gap: 12,
+  },
+  dribbbleEventCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F9F1", // matching the light green background of tasks
+    borderRadius: 20,
+    padding: 16,
+  },
+  dribbbleEventDateContainer: {
+    alignItems: "center",
+    width: 50,
+  },
+  dribbbleEventDateDay: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#4EAF63",
+  },
+  dribbbleEventDateMonth: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#A0A0A0",
+  },
+  dribbbleDivider: {
+    width: 1,
+    height: "100%",
+  },
+  emptyEvents: {
+    padding: 20,
+    alignItems: "center",
+  },
+  emptyEventsText: {
+    color: "#A0A0A0",
+    fontSize: 14,
+  },
+  dribbbleDot: {
+    height: 8,
+    width: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  dribbbleAvatarPlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: "#E2EBD5",
+  },
+  dribbbleEventInfo: {
+    flex: 1,
+    marginLeft: 16,
+    gap: 4,
+  },
+  dribbbleEventTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#333",
+  },
+  dribbbleEventDescRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  dribbbleEventDesc: {
+    fontSize: 13,
+    color: "#A0A0A0",
+    flex: 1,
+  },
+  // --- End Dribbble Layout Styles ---
   sectionStack: {
     gap: 12,
   },

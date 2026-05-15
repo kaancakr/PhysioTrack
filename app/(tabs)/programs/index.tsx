@@ -12,6 +12,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather, Ionicons } from "@expo/vector-icons";
 
 import { AppCard } from "@/components/app-card";
 import { ArtworkPanel } from "@/components/artwork-panel";
@@ -75,172 +77,308 @@ export default function ProgramsListScreen() {
   }, [focusFilter, isFocused, query]);
 
   return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingHorizontal: metrics.horizontalPadding },
-        ]}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.safeArea}>
+      <LinearGradient
+        colors={["#E8F5E9", "#F1F8E9", "#FFFFFF"]}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView
+        edges={["top", "left", "right"]}
+        style={{ flex: 1 }}
       >
-        <View
-          style={[
-            styles.content,
-            {
-              gap: metrics.sectionGap,
-              maxWidth: metrics.contentMaxWidth,
-            },
-          ]}
-        >
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Exercise programs
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Search and filter programs, then open one to browse its exercises.
-            </Text>
+        <View style={{ paddingHorizontal: metrics.horizontalPadding }}>
+          <View style={styles.dribbbleHeader}>
+            <Link asChild href="/(tabs)/dashboard">
+              <Pressable style={styles.dribbbleHeaderButton}>
+                <Feather name="chevron-left" size={24} color="#333" />
+              </Pressable>
+            </Link>
+            <View style={styles.dribbbleHeaderCenter}>
+              <Text style={styles.dribbbleHeaderSubtitle}>Collection</Text>
+              <Text style={styles.dribbbleHeaderTitle}>Programs</Text>
+            </View>
+            <Pressable style={styles.dribbbleHeaderButton}>
+              <Feather name="search" size={20} color="#333" />
+            </Pressable>
           </View>
 
-          <AppCard>
-            <View style={[styles.filterPanel, { gap: metrics.panelGap }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dribbbleCategories}>
+            {FOCUS_FILTERS.map((filter) => {
+              const isSelected = focusFilter === filter.value;
+              return (
+                <Pressable
+                  key={filter.value}
+                  onPress={() => setFocusFilter(filter.value)}
+                  style={[styles.dribbbleCategoryPill, isSelected && styles.dribbbleCategoryPillActive]}
+                >
+                  <Text style={[styles.dribbbleCategoryText, isSelected && styles.dribbbleCategoryTextActive]}>
+                    {filter.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: metrics.horizontalPadding },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View
+            style={[
+              styles.content,
+              {
+                gap: metrics.sectionGap,
+                maxWidth: metrics.contentMaxWidth,
+              },
+            ]}
+          >
+            <View style={styles.dribbbleSearchWrapper}>
               <TextInput
                 onChangeText={setQuery}
-                placeholder="Search by name or focus area"
-                placeholderTextColor={colors.textMuted}
-                style={[
-                  styles.searchInput,
-                  {
-                    backgroundColor: colors.surfaceMuted,
-                    borderColor: colors.border,
-                    color: colors.textPrimary,
-                  },
-                ]}
+                placeholder="Find a program..."
+                placeholderTextColor="#A0A0A0"
+                style={styles.dribbbleSearchInput}
                 value={query}
               />
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.filterRow}>
-                  {FOCUS_FILTERS.map((filter) => {
-                    const isSelected = focusFilter === filter.value;
-
-                    return (
-                      <Pressable
-                        key={filter.value}
-                        onPress={() => setFocusFilter(filter.value)}
-                        style={[
-                          styles.filterChip,
-                          {
-                            backgroundColor: isSelected
-                              ? colors.accentSoft
-                              : colors.surfaceMuted,
-                            borderColor: isSelected
-                              ? colors.accent
-                              : colors.border,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.filterLabel,
-                            {
-                              color: isSelected
-                                ? colors.accent
-                                : colors.textSecondary,
-                            },
-                          ]}
-                        >
-                          {filter.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
+              <View style={styles.dribbbleSearchIcon}>
+                <Feather name="sliders" size={18} color="#4EAF63" />
+              </View>
             </View>
-          </AppCard>
 
-          <View style={styles.programList}>
-            {isLoading ? (
-              <ActivityIndicator
-                color={colors.accent}
-                size="large"
-                style={styles.loader}
-              />
-            ) : (
-              programs.map((program) => (
-                <Link
-                  key={program.id}
-                  asChild
-                  href={{
-                    pathname: "/programs/[programId]",
-                    params: {
-                      difficultyLabel: program.difficultyLabel ?? "",
-                      focusAreaLabel: program.focusAreaLabel ?? "",
-                      programId: program.id,
-                      programTitle: program.title,
-                    },
-                  }}
-                >
-                  <Pressable>
-                    <AppCard>
-                      <View style={styles.programCard}>
-                        <ArtworkPanel
-                          illustration={program.illustration}
-                          subtitle={`${program.focusAreaLabel ?? "Exercise program"} • ${program.difficultyLabel ?? "Guided"} • ${formatDuration(program.totalDurationSec)} • ${program.progress.progressLabel}`}
-                          title={program.title}
-                          withoutCard
-                        />
+            <View style={styles.programList}>
+              {isLoading ? (
+                <ActivityIndicator
+                  color="#4EAF63"
+                  size="large"
+                  style={styles.loader}
+                />
+              ) : (
+                programs.map((program) => (
+                  <Link
+                    key={program.id}
+                    asChild
+                    href={{
+                      pathname: "/programs/[programId]",
+                      params: {
+                        difficultyLabel: program.difficultyLabel ?? "",
+                        focusAreaLabel: program.focusAreaLabel ?? "",
+                        programId: program.id,
+                        programTitle: program.title,
+                      },
+                    }}
+                  >
+                    <Pressable>
+                      <View style={styles.dribbbleProgramCard}>
+                        <View style={styles.dribbbleProgramImageWrap}>
+                           <View style={[styles.dribbbleImagePlaceholder, { backgroundColor: '#4EAF63' + '15' }]}>
+                             <Ionicons name="fitness" size={32} color="#4EAF63" />
+                           </View>
+                        </View>
+                        <View style={styles.dribbbleProgramInfo}>
+                          <Text style={styles.dribbbleProgramSubtitle}>
+                            {program.focusAreaLabel ?? "Focus"} • {program.difficultyLabel ?? "All levels"}
+                          </Text>
+                          <Text style={styles.dribbbleProgramTitle}>{program.title}</Text>
+                          <View style={styles.dribbbleProgramMeta}>
+                             <View style={styles.dribbbleMetaItem}>
+                                <Ionicons name="time-outline" size={14} color="#A0A0A0" />
+                                <Text style={styles.dribbbleMetaText}>{formatDuration(program.totalDurationSec)}</Text>
+                             </View>
+                             <View style={styles.dribbbleMetaItem}>
+                                <Ionicons name="flash-outline" size={14} color="#A0A0A0" />
+                                <Text style={styles.dribbbleMetaText}>{program.progress.exercisesCount} exercises</Text>
+                             </View>
+                          </View>
+                        </View>
+                        <View style={styles.dribbbleArrowBtn}>
+                           <Feather name="arrow-right" size={18} color="#333" />
+                        </View>
                       </View>
-                    </AppCard>
-                  </Pressable>
-                </Link>
-              ))
-            )}
-            {!isLoading && programs.length === 0 ? (
-              <Text
-                style={[
-                  styles.emptyState,
-                  { color: colors.textSecondary },
-                ]}
-              >
-                {errorMessage ?? "No programs found."}
-              </Text>
-            ) : null}
+                    </Pressable>
+                  </Link>
+                ))
+              )}
+              {!isLoading && programs.length === 0 ? (
+                <View style={styles.emptyStateContainer}>
+                  <Text style={styles.emptyStateText}>
+                    {errorMessage ?? "No programs found."}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingBottom: 32, paddingTop: 12 },
+  scrollContent: { flexGrow: 1, paddingBottom: 100, paddingTop: 10 },
   content: { alignSelf: "center", width: "100%" },
-  header: { gap: 8 },
-  title: { fontSize: 30, fontWeight: "800" },
-  subtitle: { fontSize: 15, lineHeight: 22 },
-  filterPanel: { width: "100%" },
-  searchInput: {
-    borderRadius: 16,
-    borderWidth: 1,
-    fontSize: 15,
-    minHeight: 54,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  loader: { marginTop: 40 },
+
+  // --- Dribbble Layout Styles ---
+  dribbbleHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    marginBottom: 10,
   },
-  filterRow: { flexDirection: "row", gap: 10 },
-  filterChip: {
-    borderRadius: 999,
-    borderWidth: 1,
+  dribbbleHeaderButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF80",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dribbbleHeaderCenter: {
+    alignItems: "center",
+  },
+  dribbbleHeaderSubtitle: {
+    fontSize: 12,
+    color: "#66BB6A",
+    fontWeight: "600",
+  },
+  dribbbleHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#333",
+  },
+  dribbbleCategories: {
+    marginBottom: 20,
+  },
+  dribbbleCategoryPill: {
     paddingHorizontal: 16,
     paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 10,
+    backgroundColor: "#FFFFFF80",
   },
-  filterLabel: { fontSize: 14, fontWeight: "700" },
-  programList: { gap: 14 },
-  programCard: { gap: 12, width: "100%" },
-  loader: { marginTop: 20 },
-  emptyState: { marginTop: 20, textAlign: "center" },
+  dribbbleCategoryPillActive: {
+    backgroundColor: "#FFFFFF",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  dribbbleCategoryText: {
+    fontSize: 14,
+    color: "#A0A0A0",
+    fontWeight: "600",
+  },
+  dribbbleCategoryTextActive: {
+    color: "#333",
+  },
+  dribbbleSearchWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFFCC",
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    height: 56,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  dribbbleSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#333",
+    fontWeight: "600",
+  },
+  dribbbleSearchIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#E8F5E9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  programList: {
+    gap: 16,
+    marginTop: 10,
+  },
+  dribbbleProgramCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFFCC",
+    borderRadius: 30,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  dribbbleProgramImageWrap: {
+    width: 70,
+    height: 70,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  dribbbleImagePlaceholder: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dribbbleProgramInfo: {
+    flex: 1,
+    marginLeft: 16,
+    justifyContent: "center",
+  },
+  dribbbleProgramSubtitle: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#C5E1A5",
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+  dribbbleProgramTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#333",
+    marginBottom: 6,
+  },
+  dribbbleProgramMeta: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  dribbbleMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  dribbbleMetaText: {
+    fontSize: 12,
+    color: "#A0A0A0",
+    fontWeight: "600",
+  },
+  dribbbleArrowBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 10,
+  },
+  emptyStateContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+  },
+  emptyStateText: {
+    fontSize: 15,
+    color: "#A0A0A0",
+    textAlign: "center",
+  },
 });

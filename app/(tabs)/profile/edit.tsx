@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { AppButton } from "@/components/app-button";
 import { AppCard } from "@/components/app-card";
@@ -82,25 +83,15 @@ function ChoiceChip(props: ChoiceChipProps) {
   return (
     <Pressable
       onPress={props.onPress}
-      style={({ pressed }) => [
-        styles.choiceChip,
-        {
-          backgroundColor: props.isSelected
-            ? colors.accent
-            : colors.surfaceMuted,
-          borderColor: props.isSelected ? colors.accent : colors.border,
-          opacity: pressed ? 0.86 : 1,
-        },
+      style={[
+        styles.dribbbleChoiceChip,
+        props.isSelected && styles.dribbbleChoiceChipActive
       ]}
     >
       <Text
         style={[
-          styles.choiceChipLabel,
-          {
-            color: props.isSelected
-              ? colors.accentContrast
-              : colors.textPrimary,
-          },
+          styles.dribbbleChoiceChipText,
+          props.isSelected && styles.dribbbleChoiceChipTextActive
         ]}
       >
         {props.label}
@@ -114,7 +105,7 @@ function ChoiceSection(props: ChoiceSectionProps) {
 
   return (
     <View style={styles.choiceSection}>
-      <Text style={[styles.choiceSectionTitle, { color: colors.textPrimary }]}>
+      <Text style={styles.dribbbleSectionTitle}>
         {props.title}
       </Text>
       {props.hint !== undefined ? (
@@ -205,248 +196,266 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.flex}
+    <View style={styles.safeArea}>
+      <LinearGradient
+        colors={["#E8F5E9", "#F1F8E9", "#FFFFFF"]}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView
+        edges={["top", "left", "right"]}
+        style={{ flex: 1 }}
       >
-        <ScrollView
-          contentContainerStyle={[
-            styles.screenContent,
-            {
-              gap: metrics.sectionGap,
-              paddingHorizontal: metrics.horizontalPadding,
-              paddingBottom: 44,
-              paddingTop: 18,
-            },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.topBar}>
-            <Pressable
+        <View style={{ paddingHorizontal: 20 }}>
+          <View style={styles.dribbbleHeader}>
+            <Pressable 
+              style={styles.dribbbleHeaderButton}
               onPress={() => router.back()}
-              style={({ pressed }) => [
-                styles.backButton,
-                {
-                  backgroundColor: colors.surfaceMuted,
-                  borderColor: colors.border,
-                  opacity: pressed ? 0.82 : 1,
-                },
-              ]}
             >
-              <Ionicons
-                color={colors.textPrimary}
-                name="chevron-back"
-                size={18}
-              />
+              <Feather name="chevron-left" size={24} color="#333" />
             </Pressable>
-            <View style={styles.topBarText}>
-              <Text style={[styles.topBarEyebrow, { color: colors.accent }]}>
-                {t("profile.edit.eyebrow")}
-              </Text>
-              <Text style={[styles.topBarTitle, { color: colors.textPrimary }]}>
-                {t("profile.edit.title")}
-              </Text>
+            <View style={styles.dribbbleHeaderCenter}>
+              <Text style={styles.dribbbleHeaderSubtitle}>{t("profile.edit.eyebrow")}</Text>
+              <Text style={styles.dribbbleHeaderTitle}>{t("profile.edit.title")}</Text>
             </View>
+            <View style={{ width: 44 }} />
           </View>
+        </View>
 
-          <AppCard>
-            <View style={styles.formSection}>
-              <AppTextField
-                autoCapitalize="words"
-                label={t("profile.fullName")}
-                onChangeText={setFullName}
-                placeholder={t("profile.edit.fullNamePlaceholder")}
-                value={fullName}
-              />
-              <AppTextField
-                editable={false}
-                label={t("profile.email")}
-                value={profile?.email ?? ""}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.flex}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.dribbbleCard}>
+              <View style={styles.formSection}>
+                <AppTextField
+                  autoCapitalize="words"
+                  label={t("profile.fullName")}
+                  onChangeText={setFullName}
+                  placeholder={t("profile.edit.fullNamePlaceholder")}
+                  value={fullName}
+                  style={styles.dribbbleInput}
+                />
+                <AppTextField
+                  editable={false}
+                  label={t("profile.email")}
+                  value={profile?.email ?? ""}
+                  style={styles.dribbbleInput}
+                />
+              </View>
+            </View>
+
+            <View style={styles.dribbbleCard}>
+              <ChoiceSection
+                hint={t("profile.edit.ageHint")}
+                title={t("profile.edit.ageTitle")}
+              >
+                {AGE_RANGE_OPTIONS.map((option) => (
+                  <ChoiceChip
+                    isSelected={ageRange === option}
+                    key={option}
+                    label={option}
+                    onPress={() => setAgeRange(option)}
+                  />
+                ))}
+              </ChoiceSection>
+            </View>
+
+            <View style={styles.dribbbleCard}>
+              <ChoiceSection
+                hint={t("profile.edit.genderHint")}
+                title={t("profile.edit.genderTitle")}
+              >
+                {GENDER_OPTIONS.map((option) => (
+                  <ChoiceChip
+                    isSelected={gender === option}
+                    key={option}
+                    label={t(`onboarding.options.gender.${option}`)}
+                    onPress={() => setGender(option)}
+                  />
+                ))}
+              </ChoiceSection>
+            </View>
+
+            <View style={styles.dribbbleCard}>
+              <ChoiceSection
+                hint={t("profile.edit.focusAreaHint")}
+                title={t("profile.edit.focusAreaTitle")}
+              >
+                {FOCUS_AREA_OPTIONS.map((option) => (
+                  <ChoiceChip
+                    isSelected={focusArea === option}
+                    key={option}
+                    label={t(`onboarding.options.focus.${option}.label`)}
+                    onPress={() => setFocusArea(option)}
+                  />
+                ))}
+              </ChoiceSection>
+            </View>
+
+            <View style={styles.dribbbleCard}>
+              <ChoiceSection
+                hint={t("profile.edit.weeklyGoalHint")}
+                title={t("profile.edit.weeklyGoalTitle")}
+              >
+                {WEEKLY_GOAL_OPTIONS.map((option) => (
+                  <ChoiceChip
+                    isSelected={weeklyGoal === option}
+                    key={option}
+                    label={t(`onboarding.options.weekly.${option}`)}
+                    onPress={() => setWeeklyGoal(option)}
+                  />
+                ))}
+              </ChoiceSection>
+            </View>
+
+            <View style={styles.dribbbleCard}>
+              <ChoiceSection
+                hint={t("profile.edit.dailyStepGoalHint")}
+                title={t("profile.edit.dailyStepGoalTitle")}
+              >
+                {DAILY_STEP_GOAL_OPTIONS.map((option) => (
+                  <ChoiceChip
+                    isSelected={dailyStepGoal === option}
+                    key={option}
+                    label={t("profile.dailyStepsValue", { count: option })}
+                    onPress={() => setDailyStepGoal(option)}
+                  />
+                ))}
+              </ChoiceSection>
+            </View>
+
+            {formError !== null ? (
+              <Text style={[styles.formError, { color: colors.danger }]}>
+                {formError}
+              </Text>
+            ) : null}
+
+            <View style={styles.formActions}>
+              <AppButton
+                label={
+                  isSubmitting ? t("profile.edit.saving") : t("profile.edit.save")
+                }
+                disabled={isSubmitting}
+                onPress={handleSave}
               />
             </View>
-          </AppCard>
-
-          <AppCard>
-            <ChoiceSection
-              hint={t("profile.edit.ageHint")}
-              title={t("profile.edit.ageTitle")}
-            >
-              {AGE_RANGE_OPTIONS.map((option) => (
-                <ChoiceChip
-                  isSelected={ageRange === option}
-                  key={option}
-                  label={option}
-                  onPress={() => setAgeRange(option)}
-                />
-              ))}
-            </ChoiceSection>
-          </AppCard>
-
-          <AppCard>
-            <ChoiceSection
-              hint={t("profile.edit.genderHint")}
-              title={t("profile.edit.genderTitle")}
-            >
-              {GENDER_OPTIONS.map((option) => (
-                <ChoiceChip
-                  isSelected={gender === option}
-                  key={option}
-                  label={t(`onboarding.options.gender.${option}`)}
-                  onPress={() => setGender(option)}
-                />
-              ))}
-            </ChoiceSection>
-          </AppCard>
-
-          <AppCard>
-            <ChoiceSection
-              hint={t("profile.edit.focusAreaHint")}
-              title={t("profile.edit.focusAreaTitle")}
-            >
-              {FOCUS_AREA_OPTIONS.map((option) => (
-                <ChoiceChip
-                  isSelected={focusArea === option}
-                  key={option}
-                  label={t(`onboarding.options.focus.${option}.label`)}
-                  onPress={() => setFocusArea(option)}
-                />
-              ))}
-            </ChoiceSection>
-          </AppCard>
-
-          <AppCard>
-            <ChoiceSection
-              hint={t("profile.edit.weeklyGoalHint")}
-              title={t("profile.edit.weeklyGoalTitle")}
-            >
-              {WEEKLY_GOAL_OPTIONS.map((option) => (
-                <ChoiceChip
-                  isSelected={weeklyGoal === option}
-                  key={option}
-                  label={t(`onboarding.options.weekly.${option}`)}
-                  onPress={() => setWeeklyGoal(option)}
-                />
-              ))}
-            </ChoiceSection>
-          </AppCard>
-
-          <AppCard>
-            <ChoiceSection
-              hint={t("profile.edit.dailyStepGoalHint")}
-              title={t("profile.edit.dailyStepGoalTitle")}
-            >
-              {DAILY_STEP_GOAL_OPTIONS.map((option) => (
-                <ChoiceChip
-                  isSelected={dailyStepGoal === option}
-                  key={option}
-                  label={t("profile.dailyStepsValue", { count: option })}
-                  onPress={() => setDailyStepGoal(option)}
-                />
-              ))}
-            </ChoiceSection>
-          </AppCard>
-
-          {formError !== null ? (
-            <Text style={[styles.formError, { color: colors.danger }]}>
-              {formError}
-            </Text>
-          ) : null}
-
-          <View style={styles.formActions}>
-            <AppButton
-              label={
-                isSubmitting ? t("profile.edit.saving") : t("profile.edit.save")
-              }
-              disabled={isSubmitting}
-              onPress={handleSave}
-            />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
+  safeArea: { flex: 1 },
+  flex: { flex: 1 },
+  scrollContent: {
+    gap: 20,
+    paddingBottom: 60,
+    paddingHorizontal: 20,
+    paddingTop: 10,
   },
-  flex: {
-    flex: 1,
-  },
-  screenContent: {
-    flexGrow: 1,
-  },
-  topBar: {
-    alignItems: "center",
+  dribbbleHeader: {
     flexDirection: "row",
-    gap: 14,
-  },
-  backButton: {
     alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
-    height: 44,
-    justifyContent: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  dribbbleHeaderButton: {
     width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF80",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  topBarText: {
-    flex: 1,
-    gap: 2,
+  dribbbleHeaderCenter: {
+    alignItems: "center",
   },
-  topBarEyebrow: {
+  dribbbleHeaderSubtitle: {
     fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
+    color: "#66BB6A",
+    fontWeight: "600",
   },
-  topBarTitle: {
-    fontSize: 28,
+  dribbbleHeaderTitle: {
+    fontSize: 18,
     fontWeight: "800",
-    lineHeight: 34,
+    color: "#333",
+  },
+  dribbbleCard: {
+    backgroundColor: "#FFFFFFCC",
+    borderRadius: 30,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  dribbbleSectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#333",
+    marginBottom: 8,
   },
   formSection: {
-    gap: 16,
+    gap: 20,
   },
   choiceSection: {
     gap: 12,
   },
-  choiceSectionTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-  },
   choiceSectionHint: {
     fontSize: 14,
+    color: "#A0A0A0",
     lineHeight: 20,
+    marginBottom: 8,
   },
   choiceGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
   },
-  choiceChip: {
-    borderRadius: 16,
-    borderWidth: 1,
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: 14,
+  dribbbleChoiceChip: {
+    paddingHorizontal: 16,
     paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: "#F5F5F5",
+    borderWidth: 1,
+    borderColor: "transparent",
   },
-  choiceChipLabel: {
+  dribbbleChoiceChipActive: {
+    backgroundColor: "#4EAF63",
+    shadowColor: "#4EAF63",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  dribbbleChoiceChipText: {
     fontSize: 14,
     fontWeight: "700",
+    color: "#A0A0A0",
+  },
+  dribbbleChoiceChipTextActive: {
+    color: "#FFF",
   },
   formError: {
     fontSize: 14,
     fontWeight: "600",
-    lineHeight: 20,
     textAlign: "center",
+    marginTop: 10,
   },
   formActions: {
-    marginTop: 4,
+    marginTop: 10,
+  },
+  dribbbleInput: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 15,
+    borderWidth: 0,
+    minHeight: 56,
+    paddingHorizontal: 12,
   },
 });

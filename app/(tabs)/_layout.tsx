@@ -84,6 +84,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="programs/[programId]/index"
         options={{

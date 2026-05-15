@@ -2,6 +2,7 @@ import { useIsFocused } from "@react-navigation/native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   ActivityIndicator,
   Pressable,
   ScrollView,
@@ -9,7 +10,9 @@ import {
   Text,
   View,
 } from "react-native";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { AppBackButton } from "@/components/app-back-button";
 import { AppCard } from "@/components/app-card";
@@ -74,6 +77,45 @@ export default function ProgramExercisesScreen() {
     void loadExercises();
   }, [isFocused, params.programId]);
 
+  const handleToggleFavorite = async (exercise: ExerciseSummary) => {
+    if (exercise.isFavorite) {
+      Alert.alert(
+        "Remove from favorites",
+        "Are you sure you want to remove this exercise from your favorites?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: () => performToggle(exercise),
+          },
+        ],
+      );
+    } else {
+      await performToggle(exercise);
+    }
+  };
+
+  const performToggle = async (exercise: ExerciseSummary) => {
+    try {
+      const path = `/api/auth/programs/${params.programId}/exercises/${exercise.id}/favorite`;
+      await requestAuthJson(path, {
+        method: "POST",
+        body: JSON.stringify({ is_favorite: !exercise.isFavorite }),
+      });
+
+      setExercises((current) =>
+        current.map((item) =>
+          item.id === exercise.id
+            ? { ...item, isFavorite: !item.isFavorite }
+            : item,
+        ),
+      );
+    } catch (error) {
+      Alert.alert("Error", "Could not update favorite status.");
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView
@@ -114,213 +156,281 @@ export default function ProgramExercisesScreen() {
     .join(" • ");
 
   return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.safeArea}>
+      <LinearGradient
+        colors={["#E8F5E9", "#F1F8E9", "#FFFFFF"]}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView
+        edges={["top", "left", "right"]}
+        style={{ flex: 1 }}
       >
-        <AppBackButton
-          label="Back to programs"
-          onPress={() => router.replace("/programs")}
-        />
-
-        <ArtworkPanel
-          illustration={{
-            background: colors.surfaceMuted,
-            icon: "library",
-            tint: colors.accent,
-          }}
-          subtitle={programMeta}
-          title={programTitle}
-        />
-
-        <View style={styles.exerciseList}>
-          {exercises.map((exercise, index) => (
-            <Link
-              key={exercise.id}
-              asChild
-              href={{
-                pathname: "/programs/[programId]/exercises/[exerciseId]",
-                params: {
-                  exerciseId: exercise.id,
-                  programId: params.programId,
-                },
-              }}
+        <View style={{ paddingHorizontal: 20 }}>
+          <View style={styles.dribbbleHeader}>
+            <Pressable 
+              style={styles.dribbbleHeaderButton}
+              onPress={() => router.replace("/programs")}
             >
-              <Pressable>
-                <AppCard>
-                  <View style={styles.exerciseCard}>
-                    <View style={styles.exerciseHeader}>
-                      <Text style={[styles.eyebrow, { color: colors.accent }]}>
-                        Exercise {exercise.exerciseOrder ?? index + 1}
-                      </Text>
-                      {exercise.progress.isFinished && (
-                        <View
-                          style={[
-                            styles.finishedBadge,
-                            {
-                              backgroundColor: "rgba(47, 197, 141, 0.14)",
-                              borderColor: "rgba(47, 197, 141, 0.28)",
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.finishedBadgeText,
-                              { color: colors.success },
-                            ]}
-                          >
-                            Completed
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-
-                    <Text
-                      style={[
-                        styles.exerciseTitle,
-                        {
-                          color: exercise.progress.isFinished
-                            ? colors.textSecondary
-                            : colors.textPrimary,
-                        },
-                      ]}
-                    >
-                      {exercise.title}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.exerciseDescription,
-                        {
-                          color: exercise.progress.isFinished
-                            ? colors.textMuted
-                            : colors.textSecondary,
-                        },
-                      ]}
-                    >
-                      {exercise.description ??
-                        "Open this exercise to review instructions and step progress."}
-                    </Text>
-                    <Text
-                      style={[styles.exerciseMeta, { color: colors.textMuted }]}
-                    >
-                      {formatDuration(exercise.totalDurationSec)} •{" "}
-                      {exercise.progress.completedStepsCount}/
-                      {exercise.progress.stepsCount} steps complete
-                    </Text>
-                  </View>
-                </AppCard>
-              </Pressable>
-            </Link>
-          ))}
-          {exercises.length === 0 ? (
-            <Text
-              style={[
-                styles.emptyText,
-                { color: colors.textSecondary, marginTop: 8 },
-              ]}
-            >
-              No exercises were returned for this program yet.
-            </Text>
-          ) : null}
+              <Feather name="chevron-left" size={24} color="#333" />
+            </Pressable>
+            <View style={styles.dribbbleHeaderCenter}>
+              <Text style={styles.dribbbleHeaderSubtitle}>Health Plan</Text>
+              <Text style={styles.dribbbleHeaderTitle} numberOfLines={1}>{programTitle}</Text>
+            </View>
+            <Pressable style={styles.dribbbleHeaderButton}>
+              <Feather name="share-2" size={20} color="#333" />
+            </Pressable>
+          </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.dribbbleHeroCard}>
+             <View style={styles.dribbbleHeroIllustration}>
+                <Ionicons name="medical" size={48} color="#4EAF63" />
+             </View>
+             <View style={styles.dribbbleHeroContent}>
+                <Text style={styles.dribbbleHeroEyebrow}>DAILY SPOTLIGHT</Text>
+                <Text style={styles.dribbbleHeroTitle}>{programTitle}</Text>
+                <Text style={styles.dribbbleHeroMeta}>{programMeta}</Text>
+             </View>
+          </View>
+
+          <View style={styles.exerciseList}>
+            {exercises.map((exercise, index) => (
+              <Link
+                key={exercise.id}
+                asChild
+                href={{
+                  pathname: "/programs/[programId]/exercises/[exerciseId]",
+                  params: {
+                    exerciseId: exercise.id,
+                    programId: params.programId,
+                  },
+                }}
+              >
+                <Pressable>
+                  <View style={styles.dribbbleExerciseCard}>
+                      <View style={styles.headerTitleRow}>
+                        <Text style={styles.dribbbleExerciseEyebrow}>
+                          EXERCISE {exercise.exerciseOrder ?? index + 1}
+                        </Text>
+                        <Pressable
+                          hitSlop={12}
+                          onPress={() => handleToggleFavorite(exercise)}
+                          style={styles.favoriteButton}
+                        >
+                          <Ionicons
+                            color={exercise.isFavorite ? "#FF5E5E" : "#A0A0A0"}
+                            name={exercise.isFavorite ? "heart" : "heart-outline"}
+                            size={20}
+                          />
+                        </Pressable>
+                      </View>
+
+                      <Text style={styles.dribbbleExerciseTitle}>
+                        {exercise.title}
+                      </Text>
+                      <Text style={styles.dribbbleExerciseDesc} numberOfLines={2}>
+                        {exercise.description ??
+                          "Open this exercise to review instructions and step progress."}
+                      </Text>
+                      
+                      <View style={styles.dribbbleExerciseFooter}>
+                         <View style={styles.dribbbleMetaItem}>
+                            <Ionicons name="time-outline" size={14} color="#A0A0A0" />
+                            <Text style={styles.dribbbleMetaText}>
+                               {formatDuration(exercise.totalDurationSec)}
+                            </Text>
+                         </View>
+                         <View style={styles.dribbbleMetaItem}>
+                            <Ionicons name="flash-outline" size={14} color="#A0A0A0" />
+                            <Text style={styles.dribbbleMetaText}>
+                               {exercise.progress.completedStepsCount}/{exercise.progress.stepsCount} steps
+                            </Text>
+                         </View>
+                         {exercise.progress.isFinished && (
+                            <View style={styles.dribbbleFinishedBadge}>
+                               <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
+                               <Text style={styles.dribbbleFinishedText}>Done</Text>
+                            </View>
+                         )}
+                      </View>
+                  </View>
+                </Pressable>
+              </Link>
+            ))}
+            {exercises.length === 0 ? (
+              <View style={styles.emptyState}>
+                 <Text style={styles.emptyText}>No exercises found.</Text>
+              </View>
+            ) : null}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
+
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    gap: 16,
-    paddingBottom: 32,
+  safeArea: { flex: 1 },
+  scrollContent: {
+    gap: 20,
+    paddingBottom: 40,
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 10,
+  },
+  dribbbleHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  dribbbleHeaderButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF80",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dribbbleHeaderCenter: {
+    alignItems: "center",
+    flex: 1,
+    marginHorizontal: 12,
+  },
+  dribbbleHeaderSubtitle: {
+    fontSize: 12,
+    color: "#66BB6A",
+    fontWeight: "600",
+  },
+  dribbbleHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#333",
+  },
+  dribbbleHeroCard: {
+    backgroundColor: "#FFFFFFCC",
+    borderRadius: 30,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    alignItems: "center",
+  },
+  dribbbleHeroIllustration: {
+    width: 100,
+    height: 100,
+    borderRadius: 30,
+    backgroundColor: "#E2EBD5",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  dribbbleHeroContent: {
+    alignItems: "center",
+  },
+  dribbbleHeroEyebrow: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#66BB6A",
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  dribbbleHeroTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  dribbbleHeroMeta: {
+    fontSize: 14,
+    color: "#A0A0A0",
+    fontWeight: "600",
+  },
+  exerciseList: {
+    gap: 16,
+  },
+  dribbbleExerciseCard: {
+    backgroundColor: "#FFFFFFCC",
+    borderRadius: 30,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  headerTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  dribbbleExerciseEyebrow: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#66BB6A",
+  },
+  favoriteButton: {
+    padding: 4,
+  },
+  dribbbleExerciseTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#333",
+    marginBottom: 8,
+  },
+  dribbbleExerciseDesc: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  dribbbleExerciseFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F5F5F5",
+  },
+  dribbbleMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  dribbbleMetaText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#A0A0A0",
+  },
+  dribbbleFinishedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#E8F5E9",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginLeft: "auto",
+  },
+  dribbbleFinishedText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#4CAF50",
   },
   emptyState: {
     alignItems: "center",
-    flex: 1,
-    gap: 10,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: "800",
+    paddingVertical: 40,
   },
   emptyText: {
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: "center",
-  },
-  summary: {
-    gap: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  description: {
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  exerciseList: {
-    gap: 12,
-  },
-  exerciseCard: {
-    gap: 8,
-  },
-  exerciseHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  eyebrow: {
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-    textTransform: "uppercase",
-  },
-  progressBadge: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  finishedBadge: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  finishedBadgeText: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.2,
-    textTransform: "uppercase",
-  },
-  finishedBanner: {
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  finishedBannerText: {
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 18,
-  },
-  exerciseTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  exerciseDescription: {
+    color: "#A0A0A0",
     fontSize: 14,
-    lineHeight: 22,
-  },
-  exerciseMeta: {
-    fontSize: 13,
-    lineHeight: 18,
   },
 });
