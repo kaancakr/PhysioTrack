@@ -32,6 +32,14 @@ const DASHBOARD_CATEGORIES = [
   { icon: "walk-outline", label: "Mobility" },
 ] as const;
 
+const MOODS = [
+  { emoji: "😫", label: "Awful", color: "#FF5E5E" },
+  { emoji: "🙁", label: "Bad", color: "#FF9800" },
+  { emoji: "😐", label: "Okay", color: "#FFC107" },
+  { emoji: "🙂", label: "Good", color: "#8BC34A" },
+  { emoji: "🤩", label: "Great", color: "#4EAF63" },
+];
+
 function buildCalendarDays(selectedDate: number) {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const today = new Date();
@@ -81,6 +89,7 @@ export default function DashboardScreen() {
     totalMinutes / Math.max(20, weeklyGoal * 12),
   );
   const stepProgress = Math.min(1, (totalMinutes * 260) / dailyStepGoal);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<number>(new Date().getDate());
   const calendarDays = buildCalendarDays(selectedDate);
 
@@ -110,18 +119,32 @@ export default function DashboardScreen() {
         const path = `/api/auth/favorites/calendar?month=${month}&year=${year}`;
         const data = await requestAuthJson<any>(path, { method: "GET" });
 
-        // The API returns month buckets. Let's assume it returns a list of events.
-        // We'll map them to the UI structure.
-        const events = Array.isArray(data) ? data : (data.results || data.items || []);
-
-        setCalendarEvents(events.map((ev: any) => ({
-          id: ev.id || ev.uuid,
-          date: ev.date || "22",
-          month: ev.month_label || ev.month || "Mar",
-          title: ev.title || "Exercise",
-          description: ev.description || "",
-          color: ev.color || (ev.is_favorite ? "#4EAF63" : "#FF5E5E"),
-        })));
+        const events: any[] = [];
+        if (data && Array.isArray(data.days)) {
+          data.days.forEach((day: any) => {
+            const dateStr = day.date; // e.g. "2026-05-18"
+            const dateObj = new Date(dateStr);
+            const dateNumber = dateObj.getDate();
+            const monthName = dateObj.toLocaleString('en-US', { month: 'short' });
+            
+            if (Array.isArray(day.exercises)) {
+              day.exercises.forEach((ex: any) => {
+                events.push({
+                  id: ex.exercise_id || String(Math.random()),
+                  date: String(dateNumber),
+                  month: monthName,
+                  title: ex.title,
+                  description: ex.is_completed ? "Completed" : "Scheduled",
+                  color: ex.is_completed ? "#4EAF63" : "#FFC107",
+                  fullDate: dateStr,
+                  dayNumber: dateNumber
+                });
+              });
+            }
+          });
+        }
+        
+        setCalendarEvents(events);
       } catch (error) {
         console.error("Dashboard: Failed to fetch calendar", error);
       } finally {
@@ -260,8 +283,8 @@ export default function DashboardScreen() {
             </View>
 
             <View style={styles.dribbbleEventsList}>
-              {calendarEvents.length > 0 ? (
-                calendarEvents.map((event) => (
+              {calendarEvents.filter(ev => ev.dayNumber === selectedDate).length > 0 ? (
+                calendarEvents.filter(ev => ev.dayNumber === selectedDate).map((event) => (
                   <View key={event.id} style={styles.dribbbleEventCard}>
                     <View style={styles.dribbbleEventDateContainer}>
                       <Text style={styles.dribbbleEventDateDay}>{event.date}</Text>
@@ -528,21 +551,62 @@ export default function DashboardScreen() {
               <View
                 style={[
                   styles.barPanel,
-                  { backgroundColor: colors.surfaceMuted },
+                  { backgroundColor: colors.surfaceMuted, paddingBottom: 24 },
                 ]}
               >
                 <Text
-                  style={[styles.sectionTitle, { color: colors.textPrimary }]}
+                  style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 16 }]}
                 >
-                  Recovery balance
+                  Daily Check-in
                 </Text>
-                <Text
-                  style={[styles.sectionText, { color: colors.textSecondary }]}
-                >
-                  A quick view of your home activity, routine, and movement
-                  momentum.
-                </Text>
-                <TrackingBars items={recoveryBars} />
+                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.textSecondary, marginBottom: 16, textAlign: 'center' }}>How are you feeling today?</Text>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  {MOODS.map((mood) => {
+                    const isSelected = selectedMood === mood.label;
+                    return (
+                      <Pressable 
+                        key={mood.label}
+                        onPress={() => setSelectedMood(mood.label)}
+                        style={[
+                          {
+                            alignItems: "center",
+                            justifyContent: "center",
+                            paddingVertical: 12,
+                            paddingHorizontal: 8,
+                            borderRadius: 24,
+                            borderWidth: 2,
+                            borderColor: "transparent",
+                            width: "19%",
+                          },
+                          isSelected && { backgroundColor: mood.color + '15', borderColor: mood.color + '50' }
+                        ]}
+                      >
+                        <View style={[
+                          {
+                            width: 44,
+                            height: 44,
+                            borderRadius: 22,
+                            backgroundColor: "#FFFFFF",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginBottom: 8,
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 8,
+                            elevation: 2,
+                          }, 
+                          isSelected && { backgroundColor: '#FFFFFF', shadowOpacity: 0.15, elevation: 4 }
+                        ]}>
+                          <Text style={{ fontSize: 22 }}>{mood.emoji}</Text>
+                        </View>
+                        <Text style={[{ fontSize: 12, color: "#A0A0A0", fontWeight: "600" }, isSelected && { color: mood.color, fontWeight: '800' }]}>
+                          {mood.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </View>
             </View>
           </AppCard>

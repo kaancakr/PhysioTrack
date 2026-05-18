@@ -194,9 +194,7 @@ export default function ProfileScreen() {
       <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: metrics.horizontalPadding }}>
           <View style={styles.dribbbleHeader}>
-            <Pressable style={styles.dribbbleHeaderButton} onPress={() => router.back()}>
-              <Feather name="chevron-left" size={24} color="#333" />
-            </Pressable>
+            <View style={{ width: 44 }} />
             <View style={styles.dribbbleHeaderCenter}>
               <Text style={styles.dribbbleHeaderSubtitle}>Account</Text>
               <Text style={styles.dribbbleHeaderTitle}>My Profile</Text>

@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
   ActivityIndicator,
   Image,
   Pressable,
@@ -15,38 +16,12 @@ import { Ionicons, Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 
-import { AppButton } from "@/components/app-button";
-import { AppBackButton } from "@/components/app-back-button";
-import { AppCard } from "@/components/app-card";
-import { ArtworkPanel } from "@/components/artwork-panel";
 import { getAuthErrorMessage, requestAuthJson } from "@/lib/auth";
 import {
   parseExerciseDetailPayload,
   type ExerciseDetail,
 } from "@/lib/exercise-flow";
 import { useAppTheme } from "@/providers/theme-provider";
-import { formatDuration } from "@/theme/formatters";
-
-function buildProgressCopy(exercise: ExerciseDetail): string {
-  if (exercise.progress.isFinished) {
-    return "Finished";
-  }
-
-  if (exercise.progress.nextStepIndex !== null) {
-    return `Next required step ${exercise.progress.nextStepIndex + 1}`;
-  }
-
-  return `${exercise.progress.completedStepsCount}/${exercise.progress.stepsCount} steps complete`;
-}
-
-function formatLabel(value: string): string {
-  return value
-    .split("_")
-    .map((part) => {
-      return part.charAt(0).toUpperCase() + part.slice(1);
-    })
-    .join(" ");
-}
 
 function getInitialPreviewStepIndex(exercise: ExerciseDetail): number {
   if (exercise.progress.nextStepIndex !== null) {
@@ -116,6 +91,10 @@ export default function ExerciseDetailScreen() {
     void loadExercise();
   }, [isFocused, params.exerciseId, params.programId]);
 
+  // State for schedule modal
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+
   const handleToggleFavorite = async () => {
     if (!exercise) return;
 
@@ -133,27 +112,66 @@ export default function ExerciseDetailScreen() {
         ],
       );
     } else {
-      await performToggle();
+      // Open modal to select days before favoriting
+      setSelectedDays([]);
+      setShowScheduleModal(true);
     }
   };
 
-  const performToggle = async () => {
+  // Extra closing brace removed
+
+  const performToggle = async (overrideDays?: string[]) => {
     if (!exercise) return;
+
+    const willBeFavorite = !exercise.isFavorite;
+    // Determine which days to send: explicit override, selectedDays (modal), or default monday
+    const daysToSend = overrideDays ?? (willBeFavorite && selectedDays.length > 0 ? selectedDays : (willBeFavorite ? ["monday"] : null));
 
     try {
       const path = `/api/auth/programs/${params.programId}/exercises/${exercise.id}/favorite`;
       await requestAuthJson(path, {
         method: "POST",
-        body: JSON.stringify({ is_favorite: !exercise.isFavorite }),
+        body: JSON.stringify({
+          is_favorite: willBeFavorite,
+          days_of_week: willBeFavorite && daysToSend && daysToSend.length > 0 ? daysToSend : null,
+        }),
       });
 
       setExercise((current) =>
-        current ? { ...current, isFavorite: !current.isFavorite } : null,
+        current ? { ...current, isFavorite: willBeFavorite, daysOfWeek: willBeFavorite ? daysToSend : null } : null,
       );
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Could not update favorite status.");
     }
   };
+  // Duplicate blocks removed
+  // Toggle day selection inside the modal
+  const toggleSelectedDay = (day: string) => {
+    setSelectedDays((prev) => {
+      if (prev.includes(day)) {
+        return prev.filter((d) => d !== day);
+      }
+      return [...prev, day];
+    });
+  };
+
+  // Toggle day for already favorited exercise (optimistic update)
+  const toggleFavoriteDay = (day: string) => {
+    if (!exercise) return;
+    const currentDays = exercise.daysOfWeek || [];
+    const newDays = currentDays.includes(day) ? currentDays.filter(d => d !== day) : [...currentDays, day];
+    // optimistic UI update
+    setExercise((cur) => cur ? { ...cur, daysOfWeek: newDays } : null);
+    // sync with backend
+    requestAuthJson(`/api/auth/programs/${params.programId}/exercises/${exercise.id}/favorite`, {
+      method: "POST",
+      body: JSON.stringify({ is_favorite: true, days_of_week: newDays }),
+    }).catch(() => {
+      // revert on error
+      setExercise((cur) => cur ? { ...cur, daysOfWeek: currentDays } : null);
+    });
+  };
+  // Duplicate toggle block removed
 
   if (isLoading) {
     return (
@@ -252,6 +270,53 @@ export default function ExerciseDetailScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {exercise.isFavorite && (
+            <View style={styles.dribbbleCard}>
+              <View style={styles.summary}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={styles.dribbbleSectionTitle}>Schedule Exercise</Text>
+                  <Ionicons name="calendar-outline" size={20} color="#4EAF63" />
+                </View>
+                <Text style={[styles.description, { color: colors.textSecondary, marginBottom: 8 }]}>Which days would you like to practice this exercise?</Text>
+                <View style={styles.daysRow}>
+                  {["monday","tuesday","wednesday","thursday","friday","saturday","sunday"].map(day => {
+                    const isSelected = (exercise.daysOfWeek || []).includes(day);
+                    return (
+                      <Pressable key={day} style={[styles.dayButton, isSelected && styles.dayButtonSelected]} onPress={() => toggleFavoriteDay(day)}>
+                        <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{day.charAt(0).toUpperCase()}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+          )}
+          {/* Modal for selecting days when adding to favorites */}
+          <Modal visible={showScheduleModal} transparent animationType="fade" onRequestClose={() => setShowScheduleModal(false)}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalCard}>
+                <Text style={styles.modalTitle}>Schedule Exercise</Text>
+                <Text style={styles.modalDescription}>Select the days you want to practice this exercise.</Text>
+                <View style={styles.daysRow}>
+                  {["monday","tuesday","wednesday","thursday","friday","saturday","sunday"].map(day => {
+                    const isSelected = selectedDays.includes(day);
+                    return (
+                      <Pressable key={day} style={[styles.dayButton, isSelected && styles.dayButtonSelected]} onPress={() => toggleSelectedDay(day)}>
+                        <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{day.charAt(0).toUpperCase()}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Pressable style={styles.modalConfirmBtn} onPress={() => { setShowScheduleModal(false); performToggle(); }}>
+                  <Text style={styles.modalConfirmText}>Confirm</Text>
+                </Pressable>
+                <Pressable style={styles.modalCancelBtn} onPress={() => setShowScheduleModal(false)}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+
           <View style={styles.dribbbleCard}>
             <View style={styles.summary}>
               <Text style={styles.dribbbleSectionTitle}>Exercise overview</Text>
@@ -607,4 +672,69 @@ const styles = StyleSheet.create({
   stepContent: {
     width: "100%",
   },
+  daysRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  dayButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayButtonSelected: {
+    backgroundColor: "#4EAF63",
+  },
+  dayText: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "700",
+  },
+  dayTextSelected: {
+    color: "#FFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 24,
+    width: "85%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 12,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  modalConfirmBtn: {
+    backgroundColor: "#4EAF63",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
+  modalConfirmText: {
+    color: "#FFF",
+    fontWeight: "600",
+  },
+  modalCancelBtn: {
+    marginTop: 12,
+  },
+  modalCancelText: {
+    color: "#555",
+  },
+  // Duplicate styles removed
 });

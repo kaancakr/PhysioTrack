@@ -92,6 +92,7 @@ export type ExerciseDetail = {
   id: string;
   illustration: ExerciseIllustration;
   isFavorite: boolean;
+  daysOfWeek: string[] | null;
   metadata: ExerciseMetadata;
   programId: string;
   programTitle: string;
@@ -495,6 +496,7 @@ function normalizeExerciseDetail(
       exerciseId,
     illustration: getExerciseIllustration(focusArea),
     isFavorite: readBoolean(exerciseObject.is_favorite) ?? false,
+    daysOfWeek: readStringArray(exerciseObject.days_of_week).length > 0 ? readStringArray(exerciseObject.days_of_week) : null,
     metadata: normalizeExerciseMetadata(asObject(exerciseObject.metadata)),
     programId,
     programTitle:

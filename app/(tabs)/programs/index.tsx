@@ -88,11 +88,7 @@ export default function ProgramsListScreen() {
       >
         <View style={{ paddingHorizontal: metrics.horizontalPadding }}>
           <View style={styles.dribbbleHeader}>
-            <Link asChild href="/(tabs)/dashboard">
-              <Pressable style={styles.dribbbleHeaderButton}>
-                <Feather name="chevron-left" size={24} color="#333" />
-              </Pressable>
-            </Link>
+            <View style={{ width: 44 }} />
             <View style={styles.dribbbleHeaderCenter}>
               <Text style={styles.dribbbleHeaderSubtitle}>Collection</Text>
               <Text style={styles.dribbbleHeaderTitle}>Programs</Text>

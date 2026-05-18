@@ -1,22 +1,20 @@
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   ActivityIndicator,
+  Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { Ionicons, Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 
-import { AppBackButton } from "@/components/app-back-button";
-import { AppCard } from "@/components/app-card";
-import { ArtworkPanel } from "@/components/artwork-panel";
 import { getAuthErrorMessage, requestAuthJson } from "@/lib/auth";
 import {
   parseProgramExercisesPayload,
@@ -40,6 +38,10 @@ export default function ProgramExercisesScreen() {
   const [exercises, setExercises] = useState<ExerciseSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [activeExercise, setActiveExercise] = useState<ExerciseSummary | null>(null);
 
   useEffect(() => {
     if (!isFocused) {
@@ -87,33 +89,47 @@ export default function ProgramExercisesScreen() {
           {
             text: "Remove",
             style: "destructive",
-            onPress: () => performToggle(exercise),
+            onPress: () => performToggle(exercise, null),
           },
         ],
       );
     } else {
-      await performToggle(exercise);
+      setActiveExercise(exercise);
+      setSelectedDays([]);
+      setShowScheduleModal(true);
     }
   };
 
-  const performToggle = async (exercise: ExerciseSummary) => {
+  const performToggle = async (exercise: ExerciseSummary, daysToSend: string[] | null) => {
+    const willBeFavorite = !exercise.isFavorite;
+    const finalDays = daysToSend ?? (willBeFavorite ? ["monday"] : null);
+
     try {
       const path = `/api/auth/programs/${params.programId}/exercises/${exercise.id}/favorite`;
       await requestAuthJson(path, {
         method: "POST",
-        body: JSON.stringify({ is_favorite: !exercise.isFavorite }),
+        body: JSON.stringify({
+          is_favorite: willBeFavorite,
+          days_of_week: finalDays
+        }),
       });
 
       setExercises((current) =>
         current.map((item) =>
           item.id === exercise.id
-            ? { ...item, isFavorite: !item.isFavorite }
+            ? { ...item, isFavorite: willBeFavorite }
             : item,
         ),
       );
     } catch (error) {
       Alert.alert("Error", "Could not update favorite status.");
     }
+  };
+
+  const toggleSelectedDay = (day: string) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
   };
 
   if (isLoading) {
@@ -167,7 +183,7 @@ export default function ProgramExercisesScreen() {
       >
         <View style={{ paddingHorizontal: 20 }}>
           <View style={styles.dribbbleHeader}>
-            <Pressable 
+            <Pressable
               style={styles.dribbbleHeaderButton}
               onPress={() => router.replace("/programs")}
             >
@@ -187,15 +203,61 @@ export default function ProgramExercisesScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          <Modal
+            visible={showScheduleModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowScheduleModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalCard}>
+                <Text style={styles.modalTitle}>Schedule Exercise</Text>
+                <Text style={styles.modalDescription}>
+                  Select the days you want to practice &quot;{activeExercise?.title}&quot;.
+                </Text>
+                <View style={styles.daysRow}>
+                  {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(day => {
+                    const isSelected = selectedDays.includes(day);
+                    return (
+                      <Pressable
+                        key={day}
+                        style={[styles.dayButton, isSelected && styles.dayButtonSelected]}
+                        onPress={() => toggleSelectedDay(day)}
+                      >
+                        <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>
+                          {day.charAt(0).toUpperCase()}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Pressable
+                  style={styles.modalConfirmBtn}
+                  onPress={() => {
+                    if (activeExercise) {
+                      setShowScheduleModal(false);
+                      performToggle(activeExercise, selectedDays.length > 0 ? selectedDays : ["monday"]);
+                    }
+                  }}
+                >
+                  <Text style={styles.modalConfirmText}>Confirm</Text>
+                </Pressable>
+                <Pressable style={styles.modalCancelBtn} onPress={() => setShowScheduleModal(false)}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+
           <View style={styles.dribbbleHeroCard}>
-             <View style={styles.dribbbleHeroIllustration}>
-                <Ionicons name="medical" size={48} color="#4EAF63" />
-             </View>
-             <View style={styles.dribbbleHeroContent}>
-                <Text style={styles.dribbbleHeroEyebrow}>DAILY SPOTLIGHT</Text>
-                <Text style={styles.dribbbleHeroTitle}>{programTitle}</Text>
-                <Text style={styles.dribbbleHeroMeta}>{programMeta}</Text>
-             </View>
+            <View style={styles.dribbbleHeroIllustration}>
+              <Ionicons name="medical" size={48} color="#4EAF63" />
+            </View>
+            <View style={styles.dribbbleHeroContent}>
+              <Text style={styles.dribbbleHeroEyebrow}>DAILY SPOTLIGHT</Text>
+              <Text style={styles.dribbbleHeroTitle}>{programTitle}</Text>
+              <Text style={styles.dribbbleHeroMeta}>{programMeta}</Text>
+            </View>
           </View>
 
           <View style={styles.exerciseList}>
@@ -213,65 +275,64 @@ export default function ProgramExercisesScreen() {
               >
                 <Pressable>
                   <View style={styles.dribbbleExerciseCard}>
-                      <View style={styles.headerTitleRow}>
-                        <Text style={styles.dribbbleExerciseEyebrow}>
-                          EXERCISE {exercise.exerciseOrder ?? index + 1}
-                        </Text>
-                        <Pressable
-                          hitSlop={12}
-                          onPress={() => handleToggleFavorite(exercise)}
-                          style={styles.favoriteButton}
-                        >
-                          <Ionicons
-                            color={exercise.isFavorite ? "#FF5E5E" : "#A0A0A0"}
-                            name={exercise.isFavorite ? "heart" : "heart-outline"}
-                            size={20}
-                          />
-                        </Pressable>
-                      </View>
+                    <View style={styles.headerTitleRow}>
+                      <Text style={styles.dribbbleExerciseEyebrow}>
+                        EXERCISE {exercise.exerciseOrder ?? index + 1}
+                      </Text>
+                      <Pressable
+                        hitSlop={12}
+                        onPress={() => handleToggleFavorite(exercise)}
+                        style={styles.favoriteButton}
+                      >
+                        <Ionicons
+                          color={exercise.isFavorite ? "#FF5E5E" : "#A0A0A0"}
+                          name={exercise.isFavorite ? "heart" : "heart-outline"}
+                          size={20}
+                        />
+                      </Pressable>
+                    </View>
 
-                      <Text style={styles.dribbbleExerciseTitle}>
-                        {exercise.title}
-                      </Text>
-                      <Text style={styles.dribbbleExerciseDesc} numberOfLines={2}>
-                        {exercise.description ??
-                          "Open this exercise to review instructions and step progress."}
-                      </Text>
-                      
-                      <View style={styles.dribbbleExerciseFooter}>
-                         <View style={styles.dribbbleMetaItem}>
-                            <Ionicons name="time-outline" size={14} color="#A0A0A0" />
-                            <Text style={styles.dribbbleMetaText}>
-                               {formatDuration(exercise.totalDurationSec)}
-                            </Text>
-                         </View>
-                         <View style={styles.dribbbleMetaItem}>
-                            <Ionicons name="flash-outline" size={14} color="#A0A0A0" />
-                            <Text style={styles.dribbbleMetaText}>
-                               {exercise.progress.completedStepsCount}/{exercise.progress.stepsCount} steps
-                            </Text>
-                         </View>
-                         {exercise.progress.isFinished && (
-                            <View style={styles.dribbbleFinishedBadge}>
-                               <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
-                               <Text style={styles.dribbbleFinishedText}>Done</Text>
-                            </View>
-                         )}
+                    <Text style={styles.dribbbleExerciseTitle}>
+                      {exercise.title}
+                    </Text>
+                    <Text style={styles.dribbbleExerciseDesc} numberOfLines={2}>
+                      {exercise.description ??
+                        "Open this exercise to review instructions and step progress."}
+                    </Text>
+
+                    <View style={styles.dribbbleExerciseFooter}>
+                      <View style={styles.dribbbleMetaItem}>
+                        <Ionicons name="time-outline" size={14} color="#A0A0A0" />
+                        <Text style={styles.dribbbleMetaText}>
+                          {formatDuration(exercise.totalDurationSec)}
+                        </Text>
                       </View>
+                      <View style={styles.dribbbleMetaItem}>
+                        <Ionicons name="flash-outline" size={14} color="#A0A0A0" />
+                        <Text style={styles.dribbbleMetaText}>
+                          {exercise.progress.completedStepsCount}/{exercise.progress.stepsCount} steps
+                        </Text>
+                      </View>
+                      {exercise.progress.isFinished && (
+                        <View style={styles.dribbbleFinishedBadge}>
+                          <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
+                          <Text style={styles.dribbbleFinishedText}>Done</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
                 </Pressable>
               </Link>
             ))}
             {exercises.length === 0 ? (
               <View style={styles.emptyState}>
-                 <Text style={styles.emptyText}>No exercises found.</Text>
+                <Text style={styles.emptyText}>No exercises found.</Text>
               </View>
             ) : null}
           </View>
         </ScrollView>
       </SafeAreaView>
     </View>
-
   );
 }
 
@@ -429,8 +490,89 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 40,
   },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 8,
+  },
   emptyText: {
     color: "#A0A0A0",
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 30,
+    padding: 24,
+    width: "100%",
+    maxWidth: 340,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#333",
+    marginBottom: 8,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  daysRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 24,
+    flexWrap: "wrap",
+  },
+  dayButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayButtonSelected: {
+    backgroundColor: "#4EAF63",
+  },
+  dayText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#666",
+  },
+  dayTextSelected: {
+    color: "#FFF",
+  },
+  modalConfirmBtn: {
+    backgroundColor: "#4EAF63",
+    paddingVertical: 14,
+    borderRadius: 16,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  modalConfirmText: {
+    color: "#FFF",
+    fontWeight: "800",
+    fontSize: 16,
+  },
+  modalCancelBtn: {
+    paddingVertical: 12,
+    width: "100%",
+    alignItems: "center",
+  },
+  modalCancelText: {
+    color: "#999",
+    fontWeight: "700",
     fontSize: 14,
   },
 });
