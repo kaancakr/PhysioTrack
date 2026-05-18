@@ -4,7 +4,7 @@ const LIGHT_THEME: ThemeColors = {
   accent: "#4EAF63",
   accentContrast: "#FFFFFF",
   accentSoft: "#A7D7B1",
-  background: "#ffffff",
+  background: "#FAFAFA",
   border: "#D7E0F0",
   card: "#FFFFFF",
   danger: "#DB5D67",
@@ -16,18 +16,18 @@ const LIGHT_THEME: ThemeColors = {
 };
 
 const DARK_THEME: ThemeColors = {
-  accent: "#5FC777",
-  accentContrast: "#081120",
-  accentSoft: "#A7D7B1",
-  background: "#5f7470",
-  border: "#22314A",
-  card: "#709775",
-  danger: "#FF8D9A",
-  success: "#72E2B2",
-  surfaceMuted: "#202B3F",
-  textMuted: "#90A0BC",
-  textPrimary: "#F7F9FE",
-  textSecondary: "#C8D3E5",
+  accent: "#6FD08C",
+  accentContrast: "#0D1B14",
+  accentSoft: "#8FCF9D",
+  background: "#0F1714",
+  border: "#22352D",
+  card: "#16211D",
+  danger: "#FF8F97",
+  success: "#63D7A0",
+  surfaceMuted: "#1C2A25",
+  textMuted: "#8EA59A",
+  textPrimary: "#F4FBF7",
+  textSecondary: "#C7D8D0",
 };
 
 export function getThemeColors(mode: ThemeMode) {

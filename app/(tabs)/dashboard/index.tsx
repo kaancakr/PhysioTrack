@@ -17,7 +17,6 @@ import { AppCard } from "@/components/app-card";
 import { ArtworkPanel } from "@/components/artwork-panel";
 import { MetricRing } from "@/components/metric-ring";
 import { StatCard } from "@/components/stat-card";
-import { TrackingBars } from "@/components/tracking-bars";
 import { EXERCISE_PROGRAMS } from "@/data/exercise-programs";
 import { requestAuthJson } from "@/lib/auth";
 import { useProgress } from "@/providers/progress-provider";
@@ -57,8 +56,6 @@ function buildCalendarDays(selectedDate: number) {
   });
 }
 
-
-
 export default function DashboardScreen() {
   const { colors, isDark } = useAppTheme();
   const { width } = useWindowDimensions();
@@ -90,18 +87,25 @@ export default function DashboardScreen() {
   );
   const stepProgress = Math.min(1, (totalMinutes * 260) / dailyStepGoal);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<number>(new Date().getDate());
+  const [selectedDate, setSelectedDate] = useState<number>(
+    new Date().getDate(),
+  );
   const calendarDays = buildCalendarDays(selectedDate);
 
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
-  const [currentLocalDate, setCurrentLocalDate] = useState<{ year: number; monthName: string; day: number; dayName: string }>(() => {
+  const [currentLocalDate, setCurrentLocalDate] = useState<{
+    year: number;
+    monthName: string;
+    day: number;
+    dayName: string;
+  }>(() => {
     const today = new Date();
     return {
       year: today.getFullYear(),
-      monthName: today.toLocaleString('en-US', { month: 'long' }).toUpperCase(),
+      monthName: today.toLocaleString("en-US", { month: "long" }).toUpperCase(),
       day: today.getDate(),
-      dayName: today.toLocaleString('en-US', { weekday: 'long' })
+      dayName: today.toLocaleString("en-US", { weekday: "long" }),
     };
   });
   const isFocused = useIsFocused();
@@ -125,8 +129,10 @@ export default function DashboardScreen() {
             const dateStr = day.date; // e.g. "2026-05-18"
             const dateObj = new Date(dateStr);
             const dateNumber = dateObj.getDate();
-            const monthName = dateObj.toLocaleString('en-US', { month: 'short' });
-            
+            const monthName = dateObj.toLocaleString("en-US", {
+              month: "short",
+            });
+
             if (Array.isArray(day.exercises)) {
               day.exercises.forEach((ex: any) => {
                 events.push({
@@ -137,13 +143,13 @@ export default function DashboardScreen() {
                   description: ex.is_completed ? "Completed" : "Scheduled",
                   color: ex.is_completed ? "#4EAF63" : "#FFC107",
                   fullDate: dateStr,
-                  dayNumber: dateNumber
+                  dayNumber: dateNumber,
                 });
               });
             }
           });
         }
-        
+
         setCalendarEvents(events);
       } catch (error) {
         console.error("Dashboard: Failed to fetch calendar", error);
@@ -154,19 +160,6 @@ export default function DashboardScreen() {
 
     fetchCalendar();
   }, [isFocused]);
-  const recoveryBars = [
-    {
-      label: "Mobility",
-      tone: colors.accent,
-      value: Math.min(1, weeklyProgress + 0.12),
-    },
-    {
-      label: "Consistency",
-      tone: colors.success,
-      value: activeSession !== null ? 0.76 : 0.58,
-    },
-    { label: "Daily steps", tone: "#FFBF69", value: stepProgress },
-  ];
 
   return (
     <SafeAreaView
@@ -220,17 +213,34 @@ export default function DashboardScreen() {
           </View>
 
           {/* Dribbble Calendar Card */}
-          <View style={styles.dribbbleCard}>
+          <View
+            style={[
+              styles.dribbbleCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.dribbbleCardHeader}>
               <View>
-                <Text style={styles.dribbbleCardHeaderSubtitle}>
+                <Text
+                  style={[
+                    styles.dribbbleCardHeaderSubtitle,
+                    { color: colors.textSecondary },
+                  ]}
+                >
                   {currentLocalDate.dayName}, {currentLocalDate.day}
                 </Text>
-                <Text style={styles.dribbbleCardHeaderTitle}>
+                <Text
+                  style={[
+                    styles.dribbbleCardHeaderTitle,
+                    { color: colors.textPrimary },
+                  ]}
+                >
                   {currentLocalDate.year}
                 </Text>
               </View>
-              <Text style={styles.dribbbleMonthText}>
+              <Text
+                style={[styles.dribbbleMonthText, { color: colors.accent }]}
+              >
                 {currentLocalDate.monthName}
               </Text>
             </View>
@@ -246,13 +256,23 @@ export default function DashboardScreen() {
                   onPress={() => setSelectedDate(day.dayNumber)}
                   style={[
                     styles.dribbbleDateItem,
-                    day.isActive && styles.dribbbleDateItemSelected,
+                    day.isActive
+                      ? {
+                          backgroundColor: colors.accent + "15",
+                          borderColor: colors.accentSoft,
+                        }
+                      : {
+                          backgroundColor: colors.surfaceMuted,
+                          borderColor: colors.border,
+                        },
                   ]}
                 >
                   <Text
                     style={[
                       styles.dribbbleDayText,
-                      { color: day.isActive ? "#4EAF63" : "#A0A0A0" },
+                      {
+                        color: day.isActive ? colors.accent : colors.textMuted,
+                      },
                     ]}
                   >
                     {day.dayName}
@@ -260,7 +280,11 @@ export default function DashboardScreen() {
                   <Text
                     style={[
                       styles.dribbbleDateText,
-                      { color: day.isActive ? "#4EAF63" : "#333" },
+                      {
+                        color: day.isActive
+                          ? colors.accent
+                          : colors.textPrimary,
+                      },
                     ]}
                   >
                     {day.dayNumber}
@@ -271,45 +295,141 @@ export default function DashboardScreen() {
           </View>
 
           {/* Dribbble Tasks Card */}
-          <View style={[styles.dribbbleCard, { marginTop: 16 }]}>
+          <View
+            style={[
+              styles.dribbbleCard,
+              {
+                marginTop: 16,
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <View style={styles.dribbbleTaskHeader}>
               <View>
-                <Text style={styles.dribbbleTaskSubtitle}>Event</Text>
-                <Text style={styles.dribbbleTaskTitle}>Task Schedule</Text>
+                <Text
+                  style={[
+                    styles.dribbbleTaskSubtitle,
+                    { color: colors.textMuted },
+                  ]}
+                >
+                  Event
+                </Text>
+                <Text
+                  style={[
+                    styles.dribbbleTaskTitle,
+                    { color: colors.textPrimary },
+                  ]}
+                >
+                  Task Schedule
+                </Text>
               </View>
-              <Pressable style={styles.dribbbleFilterButton}>
-                <Ionicons name="options-outline" size={20} color="#4EAF63" />
+              <Pressable
+                style={[
+                  styles.dribbbleFilterButton,
+                  {
+                    backgroundColor: colors.accent + "14",
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="options-outline"
+                  size={20}
+                  color={colors.accent}
+                />
               </Pressable>
             </View>
 
             <View style={styles.dribbbleEventsList}>
-              {calendarEvents.filter(ev => ev.dayNumber === selectedDate).length > 0 ? (
-                calendarEvents.filter(ev => ev.dayNumber === selectedDate).map((event) => (
-                  <View key={event.id} style={styles.dribbbleEventCard}>
-                    <View style={styles.dribbbleEventDateContainer}>
-                      <Text style={styles.dribbbleEventDateDay}>{event.date}</Text>
-                      <Text style={styles.dribbbleEventDateMonth}>{event.month}</Text>
-                    </View>
-
-                    <View style={styles.dribbbleDivider} />
-
-                    <View style={styles.dribbbleAvatarPlaceholder} />
-
-                    <View style={styles.dribbbleEventInfo}>
-                      <Text style={styles.dribbbleEventTitle}>{event.title}</Text>
-                      <View style={styles.dribbbleEventDescRow}>
-                        <View style={[styles.dribbbleDot, { backgroundColor: event.color }]} />
-                        <Text style={styles.dribbbleEventDesc} numberOfLines={1}>
-                          {event.description}
+              {calendarEvents.filter((ev) => ev.dayNumber === selectedDate)
+                .length > 0 ? (
+                calendarEvents
+                  .filter((ev) => ev.dayNumber === selectedDate)
+                  .map((event) => (
+                    <View
+                      key={event.id}
+                      style={[
+                        styles.dribbbleEventCard,
+                        {
+                          backgroundColor: colors.surfaceMuted,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <View style={styles.dribbbleEventDateContainer}>
+                        <Text
+                          style={[
+                            styles.dribbbleEventDateDay,
+                            { color: colors.accent },
+                          ]}
+                        >
+                          {event.date}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.dribbbleEventDateMonth,
+                            { color: colors.textMuted },
+                          ]}
+                        >
+                          {event.month}
                         </Text>
                       </View>
+
+                      <View
+                        style={[
+                          styles.dribbbleDivider,
+                          { backgroundColor: colors.border },
+                        ]}
+                      />
+
+                      <View
+                        style={[
+                          styles.dribbbleAvatarPlaceholder,
+                          { backgroundColor: colors.accent + "18" },
+                        ]}
+                      />
+
+                      <View style={styles.dribbbleEventInfo}>
+                        <Text
+                          style={[
+                            styles.dribbbleEventTitle,
+                            { color: colors.textPrimary },
+                          ]}
+                        >
+                          {event.title}
+                        </Text>
+                        <View style={styles.dribbbleEventDescRow}>
+                          <View
+                            style={[
+                              styles.dribbbleDot,
+                              { backgroundColor: event.color },
+                            ]}
+                          />
+                          <Text
+                            style={[
+                              styles.dribbbleEventDesc,
+                              { color: colors.textMuted },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {event.description}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
-                  </View>
-                ))
+                  ))
               ) : (
                 <View style={styles.emptyEvents}>
-                  <Text style={styles.emptyEventsText}>
-                    {isCalendarLoading ? "Loading schedule..." : "No events scheduled for this month"}
+                  <Text
+                    style={[
+                      styles.emptyEventsText,
+                      { color: colors.textMuted },
+                    ]}
+                  >
+                    {isCalendarLoading
+                      ? "Loading schedule..."
+                      : "No events scheduled for this month"}
                   </Text>
                 </View>
               )}
@@ -555,16 +675,35 @@ export default function DashboardScreen() {
                 ]}
               >
                 <Text
-                  style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 16 }]}
+                  style={[
+                    styles.sectionTitle,
+                    { color: colors.textPrimary, marginBottom: 16 },
+                  ]}
                 >
                   Daily Check-in
                 </Text>
-                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.textSecondary, marginBottom: 16, textAlign: 'center' }}>How are you feeling today?</Text>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "600",
+                    color: colors.textSecondary,
+                    marginBottom: 16,
+                    textAlign: "center",
+                  }}
+                >
+                  How are you feeling today?
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   {MOODS.map((mood) => {
                     const isSelected = selectedMood === mood.label;
                     return (
-                      <Pressable 
+                      <Pressable
                         key={mood.label}
                         onPress={() => setSelectedMood(mood.label)}
                         style={[
@@ -578,29 +717,50 @@ export default function DashboardScreen() {
                             borderColor: "transparent",
                             width: "19%",
                           },
-                          isSelected && { backgroundColor: mood.color + '15', borderColor: mood.color + '50' }
+                          isSelected && {
+                            backgroundColor: mood.color + "15",
+                            borderColor: mood.color + "50",
+                          },
                         ]}
                       >
-                        <View style={[
-                          {
-                            width: 44,
-                            height: 44,
-                            borderRadius: 22,
-                            backgroundColor: "#FFFFFF",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            marginBottom: 8,
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.05,
-                            shadowRadius: 8,
-                            elevation: 2,
-                          }, 
-                          isSelected && { backgroundColor: '#FFFFFF', shadowOpacity: 0.15, elevation: 4 }
-                        ]}>
+                        <View
+                          style={[
+                            {
+                              width: 44,
+                              height: 44,
+                              borderRadius: 22,
+                              backgroundColor: "#FFFFFF",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              marginBottom: 8,
+                              shadowColor: "#000",
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.05,
+                              shadowRadius: 8,
+                              elevation: 2,
+                            },
+                            isSelected && {
+                              backgroundColor: "#FFFFFF",
+                              shadowOpacity: 0.15,
+                              elevation: 4,
+                            },
+                          ]}
+                        >
                           <Text style={{ fontSize: 22 }}>{mood.emoji}</Text>
                         </View>
-                        <Text style={[{ fontSize: 12, color: "#A0A0A0", fontWeight: "600" }, isSelected && { color: mood.color, fontWeight: '800' }]}>
+                        <Text
+                          style={[
+                            {
+                              fontSize: 12,
+                              color: "#A0A0A0",
+                              fontWeight: "600",
+                            },
+                            isSelected && {
+                              color: mood.color,
+                              fontWeight: "800",
+                            },
+                          ]}
+                        >
                           {mood.label}
                         </Text>
                       </Pressable>
@@ -796,8 +956,8 @@ const styles = StyleSheet.create({
   },
   // --- New Dribbble Layout Styles ---
   dribbbleCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 32,
+    borderWidth: 1,
     paddingVertical: 24,
     paddingHorizontal: 20,
     shadowColor: "#000",
@@ -815,19 +975,16 @@ const styles = StyleSheet.create({
   },
   dribbbleCardHeaderSubtitle: {
     fontSize: 16,
-    color: "#888",
     fontWeight: "500",
   },
   dribbbleCardHeaderTitle: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#333",
     marginTop: 2,
   },
   dribbbleMonthText: {
     fontSize: 32,
     fontWeight: "300",
-    color: "#4EAF63",
     letterSpacing: 1,
   },
   dribbbleDatesScroll: {
@@ -840,11 +997,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 20,
+    borderWidth: 1,
     gap: 6,
     minWidth: 56,
-  },
-  dribbbleDateItemSelected: {
-    backgroundColor: "#4EAF6315", // 15% opacity of the new green color
   },
   dribbbleDayText: {
     fontSize: 12,
@@ -863,20 +1018,18 @@ const styles = StyleSheet.create({
   },
   dribbbleTaskSubtitle: {
     fontSize: 14,
-    color: "#A0A0A0",
     fontWeight: "500",
   },
   dribbbleTaskTitle: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#333",
     marginTop: 4,
   },
   dribbbleFilterButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#F2F7EC", // very light green
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -886,7 +1039,7 @@ const styles = StyleSheet.create({
   dribbbleEventCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F9F1", // matching the light green background of tasks
+    borderWidth: 1,
     borderRadius: 20,
     padding: 16,
   },
@@ -897,12 +1050,10 @@ const styles = StyleSheet.create({
   dribbbleEventDateDay: {
     fontSize: 26,
     fontWeight: "700",
-    color: "#4EAF63",
   },
   dribbbleEventDateMonth: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#A0A0A0",
   },
   dribbbleDivider: {
     width: 1,
@@ -913,7 +1064,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyEventsText: {
-    color: "#A0A0A0",
     fontSize: 14,
   },
   dribbbleDot: {
@@ -926,7 +1076,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 18,
-    backgroundColor: "#E2EBD5",
   },
   dribbbleEventInfo: {
     flex: 1,
@@ -936,7 +1085,6 @@ const styles = StyleSheet.create({
   dribbbleEventTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#333",
   },
   dribbbleEventDescRow: {
     flexDirection: "row",
@@ -945,7 +1093,6 @@ const styles = StyleSheet.create({
   },
   dribbbleEventDesc: {
     fontSize: 13,
-    color: "#A0A0A0",
     flex: 1,
   },
   // --- End Dribbble Layout Styles ---

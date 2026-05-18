@@ -35,7 +35,7 @@ function getInitialPreviewStepIndex(exercise: ExerciseDetail): number {
 }
 
 export default function ExerciseDetailScreen() {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const isFocused = useIsFocused();
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -232,9 +232,13 @@ export default function ExerciseDetailScreen() {
   const currentImageSource = currentStep.image.url;
 
   return (
-    <View style={styles.safeArea}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={["#E8F5E9", "#F1F8E9", "#FFFFFF"]}
+        colors={
+          isDark
+            ? [colors.background, colors.card, colors.surfaceMuted]
+            : [colors.accent + "14", colors.accentSoft + "18", colors.background]
+        }
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView
@@ -244,21 +248,32 @@ export default function ExerciseDetailScreen() {
         <View style={{ paddingHorizontal: 20 }}>
           <View style={styles.dribbbleHeader}>
             <Pressable 
-              style={styles.dribbbleHeaderButton}
+              style={[
+                styles.dribbbleHeaderButton,
+                { backgroundColor: colors.card + "CC", borderColor: colors.border },
+              ]}
               onPress={() => router.replace(`/programs/${params.programId}`)}
             >
-              <Feather name="chevron-left" size={24} color="#333" />
+              <Feather name="chevron-left" size={24} color={colors.textPrimary} />
             </Pressable>
             <View style={styles.dribbbleHeaderCenter}>
-              <Text style={styles.dribbbleHeaderSubtitle}>Exercise</Text>
-              <Text style={styles.dribbbleHeaderTitle} numberOfLines={1}>{exercise.title}</Text>
+              <Text style={[styles.dribbbleHeaderSubtitle, { color: colors.accent }]}>Exercise</Text>
+              <Text
+                style={[styles.dribbbleHeaderTitle, { color: colors.textPrimary }]}
+                numberOfLines={1}
+              >
+                {exercise.title}
+              </Text>
             </View>
             <Pressable 
-              style={styles.dribbbleHeaderButton}
+              style={[
+                styles.dribbbleHeaderButton,
+                { backgroundColor: colors.card + "CC", borderColor: colors.border },
+              ]}
               onPress={handleToggleFavorite}
             >
               <Ionicons
-                color={exercise.isFavorite ? "#FF5E5E" : "#333"}
+                color={exercise.isFavorite ? colors.danger : colors.textPrimary}
                 name={exercise.isFavorite ? "heart" : "heart-outline"}
                 size={22}
               />
@@ -271,19 +286,41 @@ export default function ExerciseDetailScreen() {
           showsVerticalScrollIndicator={false}
         >
           {exercise.isFavorite && (
-            <View style={styles.dribbbleCard}>
+            <View
+              style={[
+                styles.dribbbleCard,
+                { backgroundColor: colors.card + "D9", borderColor: colors.border },
+              ]}
+            >
               <View style={styles.summary}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text style={styles.dribbbleSectionTitle}>Schedule Exercise</Text>
-                  <Ionicons name="calendar-outline" size={20} color="#4EAF63" />
+                  <Text style={[styles.dribbbleSectionTitle, { color: colors.textPrimary }]}>Schedule Exercise</Text>
+                  <Ionicons name="calendar-outline" size={20} color={colors.accent} />
                 </View>
                 <Text style={[styles.description, { color: colors.textSecondary, marginBottom: 8 }]}>Which days would you like to practice this exercise?</Text>
                 <View style={styles.daysRow}>
                   {["monday","tuesday","wednesday","thursday","friday","saturday","sunday"].map(day => {
                     const isSelected = (exercise.daysOfWeek || []).includes(day);
                     return (
-                      <Pressable key={day} style={[styles.dayButton, isSelected && styles.dayButtonSelected]} onPress={() => toggleFavoriteDay(day)}>
-                        <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{day.charAt(0).toUpperCase()}</Text>
+                      <Pressable
+                        key={day}
+                        style={[
+                          styles.dayButton,
+                          {
+                            backgroundColor: isSelected ? colors.accent : colors.surfaceMuted,
+                            borderColor: isSelected ? colors.accent : colors.border,
+                          },
+                        ]}
+                        onPress={() => toggleFavoriteDay(day)}
+                      >
+                        <Text
+                          style={[
+                            styles.dayText,
+                            { color: isSelected ? colors.accentContrast : colors.textSecondary },
+                          ]}
+                        >
+                          {day.charAt(0).toUpperCase()}
+                        </Text>
                       </Pressable>
                     );
                   })}
@@ -294,76 +331,130 @@ export default function ExerciseDetailScreen() {
           {/* Modal for selecting days when adding to favorites */}
           <Modal visible={showScheduleModal} transparent animationType="fade" onRequestClose={() => setShowScheduleModal(false)}>
             <View style={styles.modalOverlay}>
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>Schedule Exercise</Text>
-                <Text style={styles.modalDescription}>Select the days you want to practice this exercise.</Text>
+              <View
+                style={[
+                  styles.modalCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Schedule Exercise</Text>
+                <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>Select the days you want to practice this exercise.</Text>
                 <View style={styles.daysRow}>
                   {["monday","tuesday","wednesday","thursday","friday","saturday","sunday"].map(day => {
                     const isSelected = selectedDays.includes(day);
                     return (
-                      <Pressable key={day} style={[styles.dayButton, isSelected && styles.dayButtonSelected]} onPress={() => toggleSelectedDay(day)}>
-                        <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{day.charAt(0).toUpperCase()}</Text>
+                      <Pressable
+                        key={day}
+                        style={[
+                          styles.dayButton,
+                          {
+                            backgroundColor: isSelected ? colors.accent : colors.surfaceMuted,
+                            borderColor: isSelected ? colors.accent : colors.border,
+                          },
+                        ]}
+                        onPress={() => toggleSelectedDay(day)}
+                      >
+                        <Text
+                          style={[
+                            styles.dayText,
+                            { color: isSelected ? colors.accentContrast : colors.textSecondary },
+                          ]}
+                        >
+                          {day.charAt(0).toUpperCase()}
+                        </Text>
                       </Pressable>
                     );
                   })}
                 </View>
-                <Pressable style={styles.modalConfirmBtn} onPress={() => { setShowScheduleModal(false); performToggle(); }}>
-                  <Text style={styles.modalConfirmText}>Confirm</Text>
+                <Pressable
+                  style={[styles.modalConfirmBtn, { backgroundColor: colors.accent }]}
+                  onPress={() => { setShowScheduleModal(false); performToggle(); }}
+                >
+                  <Text style={[styles.modalConfirmText, { color: colors.accentContrast }]}>Confirm</Text>
                 </Pressable>
                 <Pressable style={styles.modalCancelBtn} onPress={() => setShowScheduleModal(false)}>
-                  <Text style={styles.modalCancelText}>Cancel</Text>
+                  <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>Cancel</Text>
                 </Pressable>
               </View>
             </View>
           </Modal>
 
-          <View style={styles.dribbbleCard}>
+          <View
+            style={[
+              styles.dribbbleCard,
+              { backgroundColor: colors.card + "D9", borderColor: colors.border },
+            ]}
+          >
             <View style={styles.summary}>
-              <Text style={styles.dribbbleSectionTitle}>Exercise overview</Text>
+              <Text style={[styles.dribbbleSectionTitle, { color: colors.textPrimary }]}>Exercise overview</Text>
               <Text style={[styles.description, { color: colors.textSecondary }]}>
                 {exercise.description ??
                   "Move through the steps in order and review each movement before starting the guided timer."}
               </Text>
               <View style={styles.dribbbleMetaRow}>
-                <View style={styles.dribbbleMetaItem}>
-                  <Ionicons name="body-outline" size={14} color="#A0A0A0" />
-                  <Text style={styles.dribbbleMetaText}>
+                <View style={[styles.dribbbleMetaItem, { backgroundColor: colors.surfaceMuted }]}>
+                  <Ionicons name="body-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.dribbbleMetaText, { color: colors.textSecondary }]}>
                     {exercise.bodyArea ?? "general"}
                   </Text>
                 </View>
-                <View style={styles.dribbbleMetaItem}>
-                  <Ionicons name="list-outline" size={14} color="#A0A0A0" />
-                  <Text style={styles.dribbbleMetaText}>
+                <View style={[styles.dribbbleMetaItem, { backgroundColor: colors.surfaceMuted }]}>
+                  <Ionicons name="list-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.dribbbleMetaText, { color: colors.textSecondary }]}>
                     {exercise.progress.stepsCount} steps
                   </Text>
                 </View>
                 {prescription.length > 0 ? (
-                  <View style={styles.dribbbleMetaItem}>
-                    <Ionicons name="repeat-outline" size={14} color="#A0A0A0" />
-                    <Text style={styles.dribbbleMetaText}>{prescription}</Text>
+                  <View style={[styles.dribbbleMetaItem, { backgroundColor: colors.surfaceMuted }]}>
+                    <Ionicons name="repeat-outline" size={14} color={colors.textMuted} />
+                    <Text style={[styles.dribbbleMetaText, { color: colors.textSecondary }]}>{prescription}</Text>
                   </View>
                 ) : null}
               </View>
             </View>
           </View>
 
-          <View style={styles.dribbbleCard}>
+          <View
+            style={[
+              styles.dribbbleCard,
+              { backgroundColor: colors.card + "D9", borderColor: colors.border },
+            ]}
+          >
             <View style={styles.summary}>
               <View style={styles.stepPreviewHeader}>
                 <View>
-                  <Text style={styles.dribbbleSectionTitle}>Movement step</Text>
+                  <Text style={[styles.dribbbleSectionTitle, { color: colors.textPrimary }]}>Movement step</Text>
                   <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
                     Step {previewStepIndex + 1} of {exercise.steps.length}
                   </Text>
                 </View>
-                <View style={[styles.dribbbleStatusBadge, isCompleted && styles.dribbbleStatusBadgeSuccess]}>
-                   <Text style={[styles.dribbbleStatusText, isCompleted && styles.dribbbleStatusTextSuccess]}>
+                <View
+                  style={[
+                    styles.dribbbleStatusBadge,
+                    {
+                      backgroundColor: isCompleted
+                        ? colors.success + "18"
+                        : colors.accent + "14",
+                    },
+                  ]}
+                >
+                   <Text
+                     style={[
+                       styles.dribbbleStatusText,
+                       { color: isCompleted ? colors.success : colors.accent },
+                     ]}
+                   >
                      {isCompleted ? "Completed" : isNextRequiredStep ? "Next" : "Preview"}
                    </Text>
                 </View>
               </View>
 
-              <View style={styles.dribbbleImageFrame}>
+              <View
+                style={[
+                  styles.dribbbleImageFrame,
+                  { backgroundColor: colors.surfaceMuted },
+                ]}
+              >
                 {currentImageSource !== null ? (
                   <Image
                     resizeMode="cover"
@@ -372,7 +463,7 @@ export default function ExerciseDetailScreen() {
                   />
                 ) : (
                   <View style={styles.stepImagePlaceholder}>
-                    <Ionicons name="image-outline" size={48} color="#A0A0A0" />
+                    <Ionicons name="image-outline" size={48} color={colors.textMuted} />
                     <Text style={[styles.placeholderText, { marginTop: 12, color: colors.textSecondary }]}>
                       Visual coming soon
                     </Text>
@@ -385,19 +476,28 @@ export default function ExerciseDetailScreen() {
               </View>
 
               <View style={styles.stepContent}>
-                <Text style={styles.dribbbleStepTitle}>{currentStep.title}</Text>
+                <Text style={[styles.dribbbleStepTitle, { color: colors.textPrimary }]}>{currentStep.title}</Text>
                 <Text style={[styles.stepInstruction, { color: colors.textSecondary }]}>
                   {currentStep.instruction}
                 </Text>
               </View>
 
-              <View style={styles.dribbbleStepNavigation}>
+              <View
+                style={[
+                  styles.dribbbleStepNavigation,
+                  { borderTopColor: colors.border },
+                ]}
+              >
                 <Pressable
                   disabled={previewStepIndex === 0}
                   onPress={() => setPreviewStepIndex(v => Math.max(v - 1, 0))}
-                  style={[styles.dribbbleNavBtn, previewStepIndex === 0 && { opacity: 0.5 }]}
+                  style={[
+                    styles.dribbbleNavBtn,
+                    { backgroundColor: colors.surfaceMuted },
+                    previewStepIndex === 0 && { opacity: 0.5 },
+                  ]}
                 >
-                  <Feather name="chevron-left" size={24} color="#333" />
+                  <Feather name="chevron-left" size={24} color={colors.textPrimary} />
                 </Pressable>
                 
                 <View style={styles.dribbbleNavCenter}>
@@ -406,7 +506,11 @@ export default function ExerciseDetailScreen() {
                        key={idx} 
                        style={[
                          styles.dribbbleNavDot, 
-                         idx === previewStepIndex && styles.dribbbleNavDotActive
+                         {
+                           backgroundColor:
+                             idx === previewStepIndex ? colors.accent : colors.border,
+                           width: idx === previewStepIndex ? 20 : 6,
+                         },
                        ]} 
                      />
                    ))}
@@ -415,24 +519,47 @@ export default function ExerciseDetailScreen() {
                 <Pressable
                   disabled={previewStepIndex >= exercise.steps.length - 1}
                   onPress={() => setPreviewStepIndex(v => Math.min(v + 1, exercise.steps.length - 1))}
-                  style={[styles.dribbbleNavBtn, previewStepIndex >= exercise.steps.length - 1 && { opacity: 0.5 }]}
+                  style={[
+                    styles.dribbbleNavBtn,
+                    { backgroundColor: colors.surfaceMuted },
+                    previewStepIndex >= exercise.steps.length - 1 && { opacity: 0.5 },
+                  ]}
                 >
-                  <Feather name="chevron-right" size={24} color="#333" />
+                  <Feather name="chevron-right" size={24} color={colors.textPrimary} />
                 </Pressable>
               </View>
             </View>
           </View>
 
-          <View style={styles.dribbbleActionCard}>
+          <View
+            style={[
+              styles.dribbbleActionCard,
+              { backgroundColor: isDark ? colors.card : colors.textPrimary },
+            ]}
+          >
              <View>
-                <Text style={styles.dribbbleActionTitle}>Ready to start?</Text>
-                <Text style={styles.dribbbleActionSubtitle}>Follow the guided timer</Text>
+                <Text
+                  style={[
+                    styles.dribbbleActionTitle,
+                    { color: isDark ? colors.textPrimary : colors.accentContrast },
+                  ]}
+                >
+                  Ready to start?
+                </Text>
+                <Text
+                  style={[
+                    styles.dribbbleActionSubtitle,
+                    { color: isDark ? colors.textSecondary : colors.textMuted },
+                  ]}
+                >
+                  Follow the guided timer
+                </Text>
              </View>
              <Pressable 
-               style={styles.dribbbleStartBtn}
+               style={[styles.dribbbleStartBtn, { backgroundColor: colors.accent, shadowColor: colors.accent }]}
                onPress={() => router.push(`/programs/${exercise.programId}/exercises/${exercise.id}/session`)}
              >
-                <Feather name="play" size={24} color="#FFF" />
+                <Feather name="play" size={24} color={colors.accentContrast} />
              </Pressable>
           </View>
 
@@ -477,7 +604,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF80",
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -488,17 +615,15 @@ const styles = StyleSheet.create({
   },
   dribbbleHeaderSubtitle: {
     fontSize: 12,
-    color: "#66BB6A",
     fontWeight: "600",
   },
   dribbbleHeaderTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#333",
   },
   dribbbleCard: {
-    backgroundColor: "#FFFFFFCC",
     borderRadius: 30,
+    borderWidth: 1,
     padding: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -508,7 +633,6 @@ const styles = StyleSheet.create({
   dribbbleSectionTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#333",
     marginBottom: 8,
   },
   dribbbleMetaRow: {
@@ -521,7 +645,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#F5F5F5",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
@@ -529,7 +652,6 @@ const styles = StyleSheet.create({
   dribbbleMetaText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#666",
   },
   stepPreviewHeader: {
     flexDirection: "row",
@@ -541,25 +663,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
-    backgroundColor: "#FFF8E1",
-  },
-  dribbbleStatusBadgeSuccess: {
-    backgroundColor: "#E8F5E9",
   },
   dribbbleStatusText: {
     fontSize: 12,
     fontWeight: "800",
-    color: "#FBC02D",
-  },
-  dribbbleStatusTextSuccess: {
-    color: "#4CAF50",
   },
   dribbbleImageFrame: {
     borderRadius: 30,
     height: 240,
     width: "100%",
     overflow: "hidden",
-    backgroundColor: "#F0F0F0",
     position: "relative",
   },
   stepImage: {
@@ -581,14 +694,12 @@ const styles = StyleSheet.create({
   dribbbleStepTitle: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#333",
     marginTop: 20,
     marginBottom: 8,
   },
   stepInstruction: {
     fontSize: 15,
     lineHeight: 24,
-    color: "#666",
   },
   dribbbleStepNavigation: {
     flexDirection: "row",
@@ -597,13 +708,11 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: "#F5F5F5",
   },
   dribbbleNavBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#F5F5F5",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -615,14 +724,8 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#E0E0E0",
-  },
-  dribbbleNavDotActive: {
-    width: 20,
-    backgroundColor: "#4EAF63",
   },
   dribbbleActionCard: {
-    backgroundColor: "#1C1E21",
     borderRadius: 30,
     padding: 24,
     flexDirection: "row",
@@ -633,22 +736,18 @@ const styles = StyleSheet.create({
   dribbbleActionTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#FFF",
   },
   dribbbleActionSubtitle: {
     fontSize: 14,
-    color: "#A0A0A0",
     marginTop: 2,
   },
   dribbbleStartBtn: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#4EAF63",
     alignItems: "center",
     justifyContent: "center",
     elevation: 4,
-    shadowColor: "#4EAF63",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -680,20 +779,13 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F5F5F5",
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  dayButtonSelected: {
-    backgroundColor: "#4EAF63",
-  },
   dayText: {
     fontSize: 14,
-    color: "#666",
     fontWeight: "700",
-  },
-  dayTextSelected: {
-    color: "#FFF",
   },
   modalOverlay: {
     flex: 1,
@@ -702,8 +794,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalCard: {
-    backgroundColor: "#FFF",
     borderRadius: 20,
+    borderWidth: 1,
     padding: 24,
     width: "85%",
     alignItems: "center",
@@ -715,26 +807,21 @@ const styles = StyleSheet.create({
   },
   modalDescription: {
     fontSize: 14,
-    color: "#666",
     marginBottom: 16,
     textAlign: "center",
   },
   modalConfirmBtn: {
-    backgroundColor: "#4EAF63",
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 20,
     marginTop: 16,
   },
   modalConfirmText: {
-    color: "#FFF",
     fontWeight: "600",
   },
   modalCancelBtn: {
     marginTop: 12,
   },
-  modalCancelText: {
-    color: "#555",
-  },
+  modalCancelText: {},
   // Duplicate styles removed
 });

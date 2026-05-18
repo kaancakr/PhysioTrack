@@ -1,3 +1,11 @@
+import { FOCUS_FILTERS } from "@/data/exercise-programs";
+import { getAuthErrorMessage, requestAuthJson } from "@/lib/auth";
+import { parseProgramsPayload, type ProgramSummary } from "@/lib/exercise-flow";
+import { useAppTheme } from "@/providers/theme-provider";
+import { formatDuration } from "@/theme/formatters";
+import { getScreenMetrics } from "@/theme/layout";
+import { type FocusArea } from "@/types/domain";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
@@ -12,21 +20,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { Feather, Ionicons } from "@expo/vector-icons";
-
-import { AppCard } from "@/components/app-card";
-import { ArtworkPanel } from "@/components/artwork-panel";
-import { FOCUS_FILTERS } from "@/data/exercise-programs";
-import { getAuthErrorMessage, requestAuthJson } from "@/lib/auth";
-import {
-  parseProgramsPayload,
-  type ProgramSummary,
-} from "@/lib/exercise-flow";
-import { useAppTheme } from "@/providers/theme-provider";
-import { formatDuration } from "@/theme/formatters";
-import { getScreenMetrics } from "@/theme/layout";
-import { type FocusArea } from "@/types/domain";
 
 type FocusFilter = FocusArea | "all";
 
@@ -77,37 +70,65 @@ export default function ProgramsListScreen() {
   }, [focusFilter, isFocused, query]);
 
   return (
-    <View style={styles.safeArea}>
-      <LinearGradient
-        colors={["#E8F5E9", "#F1F8E9", "#FFFFFF"]}
-        style={StyleSheet.absoluteFill}
-      />
-      <SafeAreaView
-        edges={["top", "left", "right"]}
-        style={{ flex: 1 }}
-      >
+    <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: metrics.horizontalPadding }}>
           <View style={styles.dribbbleHeader}>
-            <View style={{ width: 44 }} />
             <View style={styles.dribbbleHeaderCenter}>
-              <Text style={styles.dribbbleHeaderSubtitle}>Collection</Text>
-              <Text style={styles.dribbbleHeaderTitle}>Programs</Text>
+              <Text
+                style={[
+                  styles.dribbbleHeaderSubtitle,
+                  { color: colors.accent },
+                ]}
+              >
+                Collection
+              </Text>
+              <Text
+                style={[
+                  styles.dribbbleHeaderTitle,
+                  { color: colors.textPrimary },
+                ]}
+              >
+                Programs
+              </Text>
             </View>
-            <Pressable style={styles.dribbbleHeaderButton}>
-              <Feather name="search" size={20} color="#333" />
-            </Pressable>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dribbbleCategories}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dribbbleCategoriesContent}
+            style={styles.dribbbleCategories}
+          >
             {FOCUS_FILTERS.map((filter) => {
               const isSelected = focusFilter === filter.value;
               return (
                 <Pressable
                   key={filter.value}
                   onPress={() => setFocusFilter(filter.value)}
-                  style={[styles.dribbbleCategoryPill, isSelected && styles.dribbbleCategoryPillActive]}
+                  style={[
+                    styles.dribbbleCategoryPill,
+                    {
+                      backgroundColor: isSelected
+                        ? colors.card
+                        : colors.card + "CC",
+                      borderColor: isSelected
+                        ? colors.accentSoft
+                        : colors.border,
+                    },
+                    isSelected && styles.dribbbleCategoryPillActive,
+                  ]}
                 >
-                  <Text style={[styles.dribbbleCategoryText, isSelected && styles.dribbbleCategoryTextActive]}>
+                  <Text
+                    style={[
+                      styles.dribbbleCategoryText,
+                      {
+                        color: isSelected
+                          ? colors.textPrimary
+                          : colors.textMuted,
+                      },
+                    ]}
+                  >
                     {filter.label}
                   </Text>
                 </Pressable>
@@ -132,23 +153,39 @@ export default function ProgramsListScreen() {
               },
             ]}
           >
-            <View style={styles.dribbbleSearchWrapper}>
+            <View
+              style={[
+                styles.dribbbleSearchWrapper,
+                {
+                  backgroundColor: colors.card + "CC",
+                  borderColor: colors.border,
+                },
+              ]}
+            >
               <TextInput
                 onChangeText={setQuery}
                 placeholder="Find a program..."
-                placeholderTextColor="#A0A0A0"
-                style={styles.dribbbleSearchInput}
+                placeholderTextColor={colors.textMuted}
+                style={[
+                  styles.dribbbleSearchInput,
+                  { color: colors.textPrimary },
+                ]}
                 value={query}
               />
-              <View style={styles.dribbbleSearchIcon}>
-                <Feather name="sliders" size={18} color="#4EAF63" />
+              <View
+                style={[
+                  styles.dribbbleSearchIcon,
+                  { backgroundColor: colors.accent + "14" },
+                ]}
+              >
+                <Feather name="sliders" size={18} color={colors.accent} />
               </View>
             </View>
 
             <View style={styles.programList}>
               {isLoading ? (
                 <ActivityIndicator
-                  color="#4EAF63"
+                  color={colors.accent}
                   size="large"
                   style={styles.loader}
                 />
@@ -168,30 +205,91 @@ export default function ProgramsListScreen() {
                     }}
                   >
                     <Pressable>
-                      <View style={styles.dribbbleProgramCard}>
+                      <View
+                        style={[
+                          styles.dribbbleProgramCard,
+                          {
+                            backgroundColor: colors.card + "D9",
+                            borderColor: colors.border,
+                          },
+                        ]}
+                      >
                         <View style={styles.dribbbleProgramImageWrap}>
-                           <View style={[styles.dribbbleImagePlaceholder, { backgroundColor: '#4EAF63' + '15' }]}>
-                             <Ionicons name="fitness" size={32} color="#4EAF63" />
-                           </View>
-                        </View>
-                        <View style={styles.dribbbleProgramInfo}>
-                          <Text style={styles.dribbbleProgramSubtitle}>
-                            {program.focusAreaLabel ?? "Focus"} • {program.difficultyLabel ?? "All levels"}
-                          </Text>
-                          <Text style={styles.dribbbleProgramTitle}>{program.title}</Text>
-                          <View style={styles.dribbbleProgramMeta}>
-                             <View style={styles.dribbbleMetaItem}>
-                                <Ionicons name="time-outline" size={14} color="#A0A0A0" />
-                                <Text style={styles.dribbbleMetaText}>{formatDuration(program.totalDurationSec)}</Text>
-                             </View>
-                             <View style={styles.dribbbleMetaItem}>
-                                <Ionicons name="flash-outline" size={14} color="#A0A0A0" />
-                                <Text style={styles.dribbbleMetaText}>{program.progress.exercisesCount} exercises</Text>
-                             </View>
+                          <View
+                            style={[
+                              styles.dribbbleImagePlaceholder,
+                              { backgroundColor: colors.accent + "15" },
+                            ]}
+                          >
+                            <Ionicons
+                              name="fitness"
+                              size={32}
+                              color={colors.accent}
+                            />
                           </View>
                         </View>
-                        <View style={styles.dribbbleArrowBtn}>
-                           <Feather name="arrow-right" size={18} color="#333" />
+                        <View style={styles.dribbbleProgramInfo}>
+                          <Text
+                            style={[
+                              styles.dribbbleProgramSubtitle,
+                              { color: colors.accentSoft },
+                            ]}
+                          >
+                            {program.focusAreaLabel ?? "Focus"} •{" "}
+                            {program.difficultyLabel ?? "All levels"}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.dribbbleProgramTitle,
+                              { color: colors.textPrimary },
+                            ]}
+                          >
+                            {program.title}
+                          </Text>
+                          <View style={styles.dribbbleProgramMeta}>
+                            <View style={styles.dribbbleMetaItem}>
+                              <Ionicons
+                                name="time-outline"
+                                size={14}
+                                color={colors.textMuted}
+                              />
+                              <Text
+                                style={[
+                                  styles.dribbbleMetaText,
+                                  { color: colors.textMuted },
+                                ]}
+                              >
+                                {formatDuration(program.totalDurationSec)}
+                              </Text>
+                            </View>
+                            <View style={styles.dribbbleMetaItem}>
+                              <Ionicons
+                                name="flash-outline"
+                                size={14}
+                                color={colors.textMuted}
+                              />
+                              <Text
+                                style={[
+                                  styles.dribbbleMetaText,
+                                  { color: colors.textMuted },
+                                ]}
+                              >
+                                {program.progress.exercisesCount} exercises
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                        <View
+                          style={[
+                            styles.dribbbleArrowBtn,
+                            { backgroundColor: colors.surfaceMuted },
+                          ]}
+                        >
+                          <Feather
+                            name="arrow-right"
+                            size={18}
+                            color={colors.textPrimary}
+                          />
                         </View>
                       </View>
                     </Pressable>
@@ -200,7 +298,9 @@ export default function ProgramsListScreen() {
               )}
               {!isLoading && programs.length === 0 ? (
                 <View style={styles.emptyStateContainer}>
-                  <Text style={styles.emptyStateText}>
+                  <Text
+                    style={[styles.emptyStateText, { color: colors.textMuted }]}
+                  >
                     {errorMessage ?? "No programs found."}
                   </Text>
                 </View>
@@ -221,19 +321,9 @@ const styles = StyleSheet.create({
 
   // --- Dribbble Layout Styles ---
   dribbbleHeader: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingVertical: 10,
-    marginBottom: 10,
-  },
-  dribbbleHeaderButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF80",
-    alignItems: "center",
-    justifyContent: "center",
+    marginBottom: 14,
   },
   dribbbleHeaderCenter: {
     alignItems: "center",
@@ -246,20 +336,22 @@ const styles = StyleSheet.create({
   dribbbleHeaderTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#333",
   },
   dribbbleCategories: {
     marginBottom: 20,
+  },
+  dribbbleCategoriesContent: {
+    columnGap: 10,
+    paddingTop: 4,
+    paddingBottom: 10,
   },
   dribbbleCategoryPill: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    marginRight: 10,
-    backgroundColor: "#FFFFFF80",
+    borderWidth: 1,
   },
   dribbbleCategoryPillActive: {
-    backgroundColor: "#FFFFFF",
     elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -268,20 +360,15 @@ const styles = StyleSheet.create({
   },
   dribbbleCategoryText: {
     fontSize: 14,
-    color: "#A0A0A0",
     fontWeight: "600",
-  },
-  dribbbleCategoryTextActive: {
-    color: "#333",
   },
   dribbbleSearchWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFFCC",
     borderRadius: 25,
+    borderWidth: 1,
     paddingHorizontal: 20,
     height: 56,
-    marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -290,14 +377,12 @@ const styles = StyleSheet.create({
   dribbbleSearchInput: {
     flex: 1,
     fontSize: 15,
-    color: "#333",
     fontWeight: "600",
   },
   dribbbleSearchIcon: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#E8F5E9",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -308,9 +393,9 @@ const styles = StyleSheet.create({
   dribbbleProgramCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFFCC",
     borderRadius: 30,
     padding: 16,
+    borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -335,14 +420,12 @@ const styles = StyleSheet.create({
   dribbbleProgramSubtitle: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#C5E1A5",
     textTransform: "uppercase",
     marginBottom: 4,
   },
   dribbbleProgramTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#333",
     marginBottom: 6,
   },
   dribbbleProgramMeta: {
@@ -356,14 +439,12 @@ const styles = StyleSheet.create({
   },
   dribbbleMetaText: {
     fontSize: 12,
-    color: "#A0A0A0",
     fontWeight: "600",
   },
   dribbbleArrowBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F5F5F5",
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 10,
@@ -374,7 +455,6 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 15,
-    color: "#A0A0A0",
     textAlign: "center",
   },
 });

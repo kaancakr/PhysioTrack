@@ -1,24 +1,3 @@
-import * as Haptics from "expo-haptics";
-import { Ionicons, Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import {
-  Alert,
-  Linking,
-  Pressable,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-
-import { AppButton } from "@/components/app-button";
-import { AppCard } from "@/components/app-card";
 import { useSession } from "@/providers/session-provider";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getScreenMetrics } from "@/theme/layout";
@@ -27,6 +6,22 @@ import {
   type ThemePreference,
   type WeeklyGoal,
 } from "@/types/domain";
+import { Feather, Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { router } from "expo-router";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const THEME_OPTIONS: readonly { labelKey: string; value: ThemePreference }[] = [
   { labelKey: "profile.theme.system", value: "system" },
@@ -115,13 +110,28 @@ function StatCard(props: StatCardProps) {
     <Pressable
       delayLongPress={250}
       onLongPress={handleShowInfo}
-      style={styles.statCard}
+      style={[
+        styles.statCard,
+        {
+          backgroundColor: colors.card + "D9",
+          borderColor: colors.border,
+        },
+      ]}
     >
-      <View style={[styles.statIconWrap, { backgroundColor: `${props.iconColor}15` }]}>
+      <View
+        style={[
+          styles.statIconWrap,
+          { backgroundColor: `${props.iconColor}15` },
+        ]}
+      >
         <Ionicons name={props.icon} size={20} color={props.iconColor} />
       </View>
-      <Text style={styles.statValue}>{props.value}</Text>
-      <Text style={styles.statLabel}>{props.label}</Text>
+      <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+        {props.value}
+      </Text>
+      <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+        {props.label}
+      </Text>
     </Pressable>
   );
 }
@@ -151,7 +161,7 @@ function getProfileInitials(
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { colors, preference, setPreference } = useAppTheme();
+  const { colors, isDark, preference, setPreference } = useAppTheme();
   const { width } = useWindowDimensions();
   const metrics = getScreenMetrics(width);
   const { intakeProfile, profile, refreshProfile, signOut } = useSession();
@@ -162,10 +172,19 @@ export default function ProfileScreen() {
     profile?.fullName ?? null,
     profile?.email,
   );
-  
-  const focusAreaLabel = intakeProfile === null ? t("profile.emptyValue") : t(FOCUS_AREA_LABEL_KEYS[intakeProfile.focusArea]);
-  const weeklyGoalLabel = intakeProfile === null ? t("profile.emptyValue") : t(WEEKLY_GOAL_LABEL_KEYS[intakeProfile.weeklyGoal]);
-  const dailyGoalLabel = intakeProfile === null ? t("profile.emptyValue") : t("profile.dailyStepsValue", { count: intakeProfile.dailyStepGoal });
+
+  const focusAreaLabel =
+    intakeProfile === null
+      ? t("profile.emptyValue")
+      : t(FOCUS_AREA_LABEL_KEYS[intakeProfile.focusArea]);
+  const weeklyGoalLabel =
+    intakeProfile === null
+      ? t("profile.emptyValue")
+      : t(WEEKLY_GOAL_LABEL_KEYS[intakeProfile.weeklyGoal]);
+  const dailyGoalLabel =
+    intakeProfile === null
+      ? t("profile.emptyValue")
+      : t("profile.dailyStepsValue", { count: intakeProfile.dailyStepGoal });
 
   const handleRefreshProfile = async () => {
     try {
@@ -186,21 +205,40 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.safeArea}>
-      <LinearGradient
-        colors={["#E8F5E9", "#F1F8E9", "#FFFFFF"]}
-        style={StyleSheet.absoluteFill}
-      />
+    <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: metrics.horizontalPadding }}>
           <View style={styles.dribbbleHeader}>
             <View style={{ width: 44 }} />
             <View style={styles.dribbbleHeaderCenter}>
-              <Text style={styles.dribbbleHeaderSubtitle}>Account</Text>
-              <Text style={styles.dribbbleHeaderTitle}>My Profile</Text>
+              <Text
+                style={[
+                  styles.dribbbleHeaderSubtitle,
+                  { color: colors.accent },
+                ]}
+              >
+                Account
+              </Text>
+              <Text
+                style={[
+                  styles.dribbbleHeaderTitle,
+                  { color: colors.textPrimary },
+                ]}
+              >
+                My Profile
+              </Text>
             </View>
-            <Pressable style={styles.dribbbleHeaderButton} onPress={() => router.push("/(tabs)/profile/edit")}>
-              <Feather name="edit-3" size={20} color="#333" />
+            <Pressable
+              style={[
+                styles.dribbbleHeaderButton,
+                {
+                  backgroundColor: colors.card + "CC",
+                  borderColor: colors.border,
+                },
+              ]}
+              onPress={() => router.push("/(tabs)/profile/edit")}
+            >
+              <Feather name="edit-3" size={20} color={colors.textPrimary} />
             </Pressable>
           </View>
         </View>
@@ -212,86 +250,226 @@ export default function ProfileScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.dribbbleProfileCard}>
+          <View
+            style={[
+              styles.dribbbleProfileCard,
+              {
+                backgroundColor: colors.card + "D9",
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <View style={styles.profileHeaderRow}>
               <View style={styles.dribbbleAvatarWrap}>
-                <View style={styles.dribbbleAvatar}>
-                  <Text style={styles.dribbbleAvatarText}>{profileInitials}</Text>
+                <View
+                  style={[
+                    styles.dribbbleAvatar,
+                    { backgroundColor: colors.accent + "18" },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dribbbleAvatarText,
+                      { color: colors.accent },
+                    ]}
+                  >
+                    {profileInitials}
+                  </Text>
                 </View>
-                <View style={styles.dribbbleOnlineDot} />
+                <View
+                  style={[
+                    styles.dribbbleOnlineDot,
+                    {
+                      backgroundColor: colors.success,
+                      borderColor: colors.card,
+                    },
+                  ]}
+                />
               </View>
               <View style={styles.profileHeaderText}>
-                <Text style={styles.dribbbleProfileName}>{profile?.fullName ?? t("profile.unknownUser")}</Text>
-                <Text style={styles.dribbbleProfileEmail}>{profile?.email ?? t("profile.emptyValue")}</Text>
-                <View style={styles.dribbbleStatusBadge}>
-                   <Ionicons name={profile?.isEmailVerified ? "checkmark-circle" : "alert-circle"} size={12} color={profile?.isEmailVerified ? "#4CAF50" : "#FFA000"} />
-                   <Text style={[styles.dribbbleStatusText, { color: profile?.isEmailVerified ? "#4CAF50" : "#FFA000" }]}>
-                      {profile?.isEmailVerified ? "Verified" : "Unverified"}
-                   </Text>
+                <Text
+                  style={[
+                    styles.dribbbleProfileName,
+                    { color: colors.textPrimary },
+                  ]}
+                >
+                  {profile?.fullName ?? t("profile.unknownUser")}
+                </Text>
+                <Text
+                  style={[
+                    styles.dribbbleProfileEmail,
+                    { color: colors.textMuted },
+                  ]}
+                >
+                  {profile?.email ?? t("profile.emptyValue")}
+                </Text>
+                <View
+                  style={[
+                    styles.dribbbleStatusBadge,
+                    {
+                      backgroundColor: colors.surfaceMuted,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={
+                      profile?.isEmailVerified
+                        ? "checkmark-circle"
+                        : "alert-circle"
+                    }
+                    size={12}
+                    color={
+                      profile?.isEmailVerified ? colors.success : "#FFA000"
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.dribbbleStatusText,
+                      {
+                        color: profile?.isEmailVerified
+                          ? colors.success
+                          : "#FFA000",
+                      },
+                    ]}
+                  >
+                    {profile?.isEmailVerified ? "Verified" : "Unverified"}
+                  </Text>
                 </View>
               </View>
             </View>
           </View>
 
           <View style={styles.dribbbleSectionRow}>
-             <Text style={styles.dribbbleSectionTitle}>Performance</Text>
-             <Pressable onPress={handleRefreshProfile}>
-                <Feather name="refresh-cw" size={16} color="#66BB6A" />
-             </Pressable>
+            <Text
+              style={[
+                styles.dribbbleSectionTitle,
+                { color: colors.textPrimary },
+              ]}
+            >
+              Performance
+            </Text>
+            <Pressable onPress={handleRefreshProfile}>
+              <Feather name="refresh-cw" size={16} color={colors.accent} />
+            </Pressable>
           </View>
 
           <View style={styles.statsGrid}>
-            <StatCard 
-              icon="apps-outline" 
-              iconColor="#4CAF50" 
-              label={t("profile.programsMetric")} 
-              value={`${profile?.overallProgress?.completedProgramsCount ?? 0}/${profile?.overallProgress?.programsCount ?? 0}`} 
-              infoMessage={t("profile.programsSubtitle")} 
+            <StatCard
+              icon="apps-outline"
+              iconColor="#4CAF50"
+              label={t("profile.programsMetric")}
+              value={`${profile?.overallProgress?.completedProgramsCount ?? 0}/${profile?.overallProgress?.programsCount ?? 0}`}
+              infoMessage={t("profile.programsSubtitle")}
             />
-            <StatCard 
-              icon="fitness-outline" 
-              iconColor="#FF9800" 
-              label={t("profile.exercisesMetric")} 
-              value={`${profile?.overallProgress?.completedExercisesCount ?? 0}/${profile?.overallProgress?.exercisesCount ?? 0}`} 
-              infoMessage={t("profile.exercisesSubtitle")} 
+            <StatCard
+              icon="fitness-outline"
+              iconColor="#FF9800"
+              label={t("profile.exercisesMetric")}
+              value={`${profile?.overallProgress?.completedExercisesCount ?? 0}/${profile?.overallProgress?.exercisesCount ?? 0}`}
+              infoMessage={t("profile.exercisesSubtitle")}
             />
           </View>
 
           <View style={styles.statsGrid}>
-            <StatCard 
-              icon="footsteps-outline" 
-              iconColor="#2196F3" 
-              label={t("profile.stepsMetric")} 
-              value={`${profile?.overallProgress?.completedStepsCount ?? 0}/${profile?.overallProgress?.stepsCount ?? 0}`} 
-              infoMessage={t("profile.stepsSubtitle")} 
+            <StatCard
+              icon="footsteps-outline"
+              iconColor="#2196F3"
+              label={t("profile.stepsMetric")}
+              value={`${profile?.overallProgress?.completedStepsCount ?? 0}/${profile?.overallProgress?.stepsCount ?? 0}`}
+              infoMessage={t("profile.stepsSubtitle")}
             />
           </View>
 
           <View style={styles.dribbbleSectionRow}>
-             <Text style={styles.dribbbleSectionTitle}>Settings</Text>
+            <Text
+              style={[
+                styles.dribbbleSectionTitle,
+                { color: colors.textPrimary },
+              ]}
+            >
+              Settings
+            </Text>
           </View>
 
-          <View style={styles.actionsWrapper}>
-            <ProfileActionItem color={colors.accent} icon="body-outline" label={t("profile.focusArea")} onPress={() => router.push("/(tabs)/profile/edit")} value={focusAreaLabel} />
-            <ProfileActionItem color={colors.success} icon="calendar-outline" label={t("profile.weeklyGoal")} onPress={() => router.push("/(tabs)/profile/edit")} value={weeklyGoalLabel} />
-            <ProfileActionItem color="#2196F3" icon="footsteps-outline" label={t("profile.dailyStepGoal")} onPress={() => router.push("/(tabs)/profile/edit")} value={dailyGoalLabel} />
+          <View
+            style={[
+              styles.actionsWrapper,
+              {
+                backgroundColor: colors.card + "D9",
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <ProfileActionItem
+              color={colors.accent}
+              icon="body-outline"
+              label={t("profile.focusArea")}
+              onPress={() => router.push("/(tabs)/profile/edit")}
+              value={focusAreaLabel}
+            />
+            <ProfileActionItem
+              color={colors.success}
+              icon="calendar-outline"
+              label={t("profile.weeklyGoal")}
+              onPress={() => router.push("/(tabs)/profile/edit")}
+              value={weeklyGoalLabel}
+            />
+            <ProfileActionItem
+              color="#2196F3"
+              icon="footsteps-outline"
+              label={t("profile.dailyStepGoal")}
+              onPress={() => router.push("/(tabs)/profile/edit")}
+              value={dailyGoalLabel}
+            />
           </View>
 
           <View style={styles.dribbbleSectionRow}>
-             <Text style={styles.dribbbleSectionTitle}>{t("profile.appearanceSection")}</Text>
+            <Text
+              style={[
+                styles.dribbbleSectionTitle,
+                { color: colors.textPrimary },
+              ]}
+            >
+              {t("profile.appearanceSection")}
+            </Text>
           </View>
-          
-          <View style={styles.dribbbleThemeRow}>
+
+          <View
+            style={[
+              styles.dribbbleThemeRow,
+              {
+                backgroundColor: colors.card + "B3",
+                borderColor: colors.border,
+              },
+            ]}
+          >
             {THEME_OPTIONS.map((option) => (
               <Pressable
                 key={option.value}
                 onPress={() => void setPreference(option.value)}
                 style={[
                   styles.dribbbleThemeTab,
-                  preference === option.value && styles.dribbbleThemeTabActive
+                  preference === option.value && styles.dribbbleThemeTabActive,
+                  preference === option.value
+                    ? {
+                        backgroundColor: colors.card,
+                        borderColor: colors.accentSoft,
+                      }
+                    : undefined,
                 ]}
               >
-                <Text style={[styles.dribbbleThemeText, preference === option.value && styles.dribbbleThemeTextActive]}>
+                <Text
+                  style={[
+                    styles.dribbbleThemeText,
+                    {
+                      color:
+                        preference === option.value
+                          ? colors.textPrimary
+                          : colors.textMuted,
+                    },
+                  ]}
+                >
                   {t(option.labelKey)}
                 </Text>
               </Pressable>
@@ -299,29 +477,56 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.dribbbleSectionRow}>
-             <Text style={styles.dribbbleSectionTitle}>{t("profile.supportSection")}</Text>
+            <Text
+              style={[
+                styles.dribbbleSectionTitle,
+                { color: colors.textPrimary },
+              ]}
+            >
+              {t("profile.supportSection")}
+            </Text>
           </View>
 
-          <View style={styles.actionsWrapper}>
-             <ProfileActionItem 
-               color="#FF5252" 
-               icon="chatbubble-ellipses-outline" 
-               label={t("profile.sendFeedback")} 
-               onPress={() => Linking.openURL("mailto:feedback@physiotrack.app")} 
-               value={t("profile.sendFeedbackHint")} 
-             />
-             <ProfileActionItem 
-               color="#FFD740" 
-               icon="star-outline" 
-               label={t("profile.rateApp")} 
-               onPress={() => Linking.openURL("https://physiotrack.app")} 
-               value={t("profile.rateAppHint")} 
-             />
+          <View
+            style={[
+              styles.actionsWrapper,
+              {
+                backgroundColor: colors.card + "D9",
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <ProfileActionItem
+              color="#FF5252"
+              icon="chatbubble-ellipses-outline"
+              label={t("profile.sendFeedback")}
+              onPress={() => Linking.openURL("mailto:feedback@physiotrack.app")}
+              value={t("profile.sendFeedbackHint")}
+            />
+            <ProfileActionItem
+              color="#FFD740"
+              icon="star-outline"
+              label={t("profile.rateApp")}
+              onPress={() => Linking.openURL("https://physiotrack.app")}
+              value={t("profile.rateAppHint")}
+            />
           </View>
 
-          <Pressable style={styles.signOutButton} onPress={handleSignOut} disabled={isSigningOut}>
-            <Feather name="log-out" size={18} color="#D32F2F" />
-            <Text style={styles.signOutText}>{isSigningOut ? t("profile.signingOut") : t("profile.signOut")}</Text>
+          <Pressable
+            style={[
+              styles.signOutButton,
+              {
+                backgroundColor: colors.danger + "14",
+                borderColor: colors.danger + "30",
+              },
+            ]}
+            onPress={handleSignOut}
+            disabled={isSigningOut}
+          >
+            <Feather name="log-out" size={18} color={colors.danger} />
+            <Text style={[styles.signOutText, { color: colors.danger }]}>
+              {isSigningOut ? t("profile.signingOut") : t("profile.signOut")}
+            </Text>
           </Pressable>
         </ScrollView>
       </SafeAreaView>
@@ -347,7 +552,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF80",
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -356,18 +561,16 @@ const styles = StyleSheet.create({
   },
   dribbbleHeaderSubtitle: {
     fontSize: 12,
-    color: "#66BB6A",
     fontWeight: "600",
   },
   dribbbleHeaderTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#333",
   },
   dribbbleProfileCard: {
-    backgroundColor: "#FFFFFFCC",
     borderRadius: 30,
     padding: 24,
+    borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -384,14 +587,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 30,
-    backgroundColor: "#E2EBD5",
     alignItems: "center",
     justifyContent: "center",
   },
   dribbbleAvatarText: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#4EAF63",
   },
   dribbbleOnlineDot: {
     position: "absolute",
@@ -400,9 +601,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: "#66BB6A",
     borderWidth: 3,
-    borderColor: "#FFF",
   },
   profileHeaderText: {
     flex: 1,
@@ -411,12 +610,10 @@ const styles = StyleSheet.create({
   dribbbleProfileName: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#333",
     marginBottom: 4,
   },
   dribbbleProfileEmail: {
     fontSize: 14,
-    color: "#A0A0A0",
     fontWeight: "600",
     marginBottom: 8,
   },
@@ -424,7 +621,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -443,7 +640,6 @@ const styles = StyleSheet.create({
   dribbbleSectionTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#333",
   },
   statsGrid: {
     flexDirection: "row",
@@ -451,8 +647,8 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#FFFFFFCC",
     borderRadius: 25,
+    borderWidth: 1,
     padding: 20,
     alignItems: "center",
   },
@@ -467,17 +663,15 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#333",
   },
   statLabel: {
     fontSize: 12,
-    color: "#A0A0A0",
     fontWeight: "600",
     marginTop: 2,
   },
   actionsWrapper: {
-    backgroundColor: "#FFFFFFCC",
     borderRadius: 30,
+    borderWidth: 1,
     paddingVertical: 10,
     overflow: "hidden",
   },
@@ -510,21 +704,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFEBEE",
+    borderWidth: 1,
     paddingVertical: 16,
     borderRadius: 25,
     gap: 10,
     marginTop: 10,
   },
   signOutText: {
-    color: "#D32F2F",
     fontWeight: "800",
     fontSize: 15,
   },
   dribbbleThemeRow: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF80",
     borderRadius: 20,
+    borderWidth: 1,
     padding: 6,
     gap: 6,
   },
@@ -533,9 +726,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
     borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   dribbbleThemeTabActive: {
-    backgroundColor: "#FFFFFF",
     elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -545,9 +739,5 @@ const styles = StyleSheet.create({
   dribbbleThemeText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#A0A0A0",
-  },
-  dribbbleThemeTextActive: {
-    color: "#333",
   },
 });

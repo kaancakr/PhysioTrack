@@ -31,7 +31,7 @@ type ProgramRouteParams = {
 };
 
 export default function ProgramExercisesScreen() {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const isFocused = useIsFocused();
   const router = useRouter();
   const params = useLocalSearchParams<ProgramRouteParams>();
@@ -41,7 +41,9 @@ export default function ProgramExercisesScreen() {
 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [activeExercise, setActiveExercise] = useState<ExerciseSummary | null>(null);
+  const [activeExercise, setActiveExercise] = useState<ExerciseSummary | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isFocused) {
@@ -100,7 +102,10 @@ export default function ProgramExercisesScreen() {
     }
   };
 
-  const performToggle = async (exercise: ExerciseSummary, daysToSend: string[] | null) => {
+  const performToggle = async (
+    exercise: ExerciseSummary,
+    daysToSend: string[] | null,
+  ) => {
     const willBeFavorite = !exercise.isFavorite;
     const finalDays = daysToSend ?? (willBeFavorite ? ["monday"] : null);
 
@@ -110,7 +115,7 @@ export default function ProgramExercisesScreen() {
         method: "POST",
         body: JSON.stringify({
           is_favorite: willBeFavorite,
-          days_of_week: finalDays
+          days_of_week: finalDays,
         }),
       });
 
@@ -121,14 +126,14 @@ export default function ProgramExercisesScreen() {
             : item,
         ),
       );
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Could not update favorite status.");
     }
   };
 
   const toggleSelectedDay = (day: string) => {
     setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
     );
   };
 
@@ -172,29 +177,67 @@ export default function ProgramExercisesScreen() {
     .join(" • ");
 
   return (
-    <View style={styles.safeArea}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={["#E8F5E9", "#F1F8E9", "#FFFFFF"]}
+        colors={
+          isDark
+            ? [colors.background, colors.card, colors.surfaceMuted]
+            : [
+                colors.accent + "14",
+                colors.accentSoft + "18",
+                colors.background,
+              ]
+        }
         style={StyleSheet.absoluteFill}
       />
-      <SafeAreaView
-        edges={["top", "left", "right"]}
-        style={{ flex: 1 }}
-      >
+      <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: 20 }}>
           <View style={styles.dribbbleHeader}>
             <Pressable
-              style={styles.dribbbleHeaderButton}
+              style={[
+                styles.dribbbleHeaderButton,
+                {
+                  backgroundColor: colors.card + "CC",
+                  borderColor: colors.border,
+                },
+              ]}
               onPress={() => router.replace("/programs")}
             >
-              <Feather name="chevron-left" size={24} color="#333" />
+              <Feather
+                name="chevron-left"
+                size={24}
+                color={colors.textPrimary}
+              />
             </Pressable>
             <View style={styles.dribbbleHeaderCenter}>
-              <Text style={styles.dribbbleHeaderSubtitle}>Health Plan</Text>
-              <Text style={styles.dribbbleHeaderTitle} numberOfLines={1}>{programTitle}</Text>
+              <Text
+                style={[
+                  styles.dribbbleHeaderSubtitle,
+                  { color: colors.accent },
+                ]}
+              >
+                Health Plan
+              </Text>
+              <Text
+                style={[
+                  styles.dribbbleHeaderTitle,
+                  { color: colors.textPrimary },
+                ]}
+                numberOfLines={1}
+              >
+                {programTitle}
+              </Text>
             </View>
-            <Pressable style={styles.dribbbleHeaderButton}>
-              <Feather name="share-2" size={20} color="#333" />
+            <Pressable
+              style={[
+                styles.dribbbleHeaderButton,
+                {
+                  backgroundColor: colors.card + "CC",
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Feather name="share-2" size={20} color={colors.textPrimary} />
             </Pressable>
           </View>
         </View>
@@ -210,21 +253,63 @@ export default function ProgramExercisesScreen() {
             onRequestClose={() => setShowScheduleModal(false)}
           >
             <View style={styles.modalOverlay}>
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>Schedule Exercise</Text>
-                <Text style={styles.modalDescription}>
-                  Select the days you want to practice &quot;{activeExercise?.title}&quot;.
+              <View
+                style={[
+                  styles.modalCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <Text
+                  style={[styles.modalTitle, { color: colors.textPrimary }]}
+                >
+                  Schedule Exercise
+                </Text>
+                <Text
+                  style={[
+                    styles.modalDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Select the days you want to practice &quot;
+                  {activeExercise?.title}&quot;.
                 </Text>
                 <View style={styles.daysRow}>
-                  {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(day => {
+                  {[
+                    "monday",
+                    "tuesday",
+                    "wednesday",
+                    "thursday",
+                    "friday",
+                    "saturday",
+                    "sunday",
+                  ].map((day) => {
                     const isSelected = selectedDays.includes(day);
                     return (
                       <Pressable
                         key={day}
-                        style={[styles.dayButton, isSelected && styles.dayButtonSelected]}
+                        style={[
+                          styles.dayButton,
+                          {
+                            backgroundColor: isSelected
+                              ? colors.accent
+                              : colors.surfaceMuted,
+                            borderColor: isSelected
+                              ? colors.accent
+                              : colors.border,
+                          },
+                        ]}
                         onPress={() => toggleSelectedDay(day)}
                       >
-                        <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>
+                        <Text
+                          style={[
+                            styles.dayText,
+                            {
+                              color: isSelected
+                                ? colors.accentContrast
+                                : colors.textSecondary,
+                            },
+                          ]}
+                        >
                           {day.charAt(0).toUpperCase()}
                         </Text>
                       </Pressable>
@@ -232,31 +317,82 @@ export default function ProgramExercisesScreen() {
                   })}
                 </View>
                 <Pressable
-                  style={styles.modalConfirmBtn}
+                  style={[
+                    styles.modalConfirmBtn,
+                    { backgroundColor: colors.accent },
+                  ]}
                   onPress={() => {
                     if (activeExercise) {
                       setShowScheduleModal(false);
-                      performToggle(activeExercise, selectedDays.length > 0 ? selectedDays : ["monday"]);
+                      performToggle(
+                        activeExercise,
+                        selectedDays.length > 0 ? selectedDays : ["monday"],
+                      );
                     }
                   }}
                 >
-                  <Text style={styles.modalConfirmText}>Confirm</Text>
+                  <Text
+                    style={[
+                      styles.modalConfirmText,
+                      { color: colors.accentContrast },
+                    ]}
+                  >
+                    Confirm
+                  </Text>
                 </Pressable>
-                <Pressable style={styles.modalCancelBtn} onPress={() => setShowScheduleModal(false)}>
-                  <Text style={styles.modalCancelText}>Cancel</Text>
+                <Pressable
+                  style={styles.modalCancelBtn}
+                  onPress={() => setShowScheduleModal(false)}
+                >
+                  <Text
+                    style={[
+                      styles.modalCancelText,
+                      { color: colors.textMuted },
+                    ]}
+                  >
+                    Cancel
+                  </Text>
                 </Pressable>
               </View>
             </View>
           </Modal>
 
-          <View style={styles.dribbbleHeroCard}>
-            <View style={styles.dribbbleHeroIllustration}>
-              <Ionicons name="medical" size={48} color="#4EAF63" />
+          <View
+            style={[
+              styles.dribbbleHeroCard,
+              {
+                backgroundColor: colors.card + "D9",
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.dribbbleHeroIllustration,
+                { backgroundColor: colors.accent + "18" },
+              ]}
+            >
+              <Ionicons name="medical" size={48} color={colors.accent} />
             </View>
             <View style={styles.dribbbleHeroContent}>
-              <Text style={styles.dribbbleHeroEyebrow}>DAILY SPOTLIGHT</Text>
-              <Text style={styles.dribbbleHeroTitle}>{programTitle}</Text>
-              <Text style={styles.dribbbleHeroMeta}>{programMeta}</Text>
+              <Text
+                style={[styles.dribbbleHeroEyebrow, { color: colors.accent }]}
+              >
+                DAILY SPOTLIGHT
+              </Text>
+              <Text
+                style={[
+                  styles.dribbbleHeroTitle,
+                  { color: colors.textPrimary },
+                ]}
+              >
+                {programTitle}
+              </Text>
+              <Text
+                style={[styles.dribbbleHeroMeta, { color: colors.textMuted }]}
+              >
+                {programMeta}
+              </Text>
             </View>
           </View>
 
@@ -274,9 +410,22 @@ export default function ProgramExercisesScreen() {
                 }}
               >
                 <Pressable>
-                  <View style={styles.dribbbleExerciseCard}>
+                  <View
+                    style={[
+                      styles.dribbbleExerciseCard,
+                      {
+                        backgroundColor: colors.card + "D9",
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
                     <View style={styles.headerTitleRow}>
-                      <Text style={styles.dribbbleExerciseEyebrow}>
+                      <Text
+                        style={[
+                          styles.dribbbleExerciseEyebrow,
+                          { color: colors.accent },
+                        ]}
+                      >
                         EXERCISE {exercise.exerciseOrder ?? index + 1}
                       </Text>
                       <Pressable
@@ -285,38 +434,93 @@ export default function ProgramExercisesScreen() {
                         style={styles.favoriteButton}
                       >
                         <Ionicons
-                          color={exercise.isFavorite ? "#FF5E5E" : "#A0A0A0"}
+                          color={
+                            exercise.isFavorite
+                              ? colors.danger
+                              : colors.textMuted
+                          }
                           name={exercise.isFavorite ? "heart" : "heart-outline"}
                           size={20}
                         />
                       </Pressable>
                     </View>
 
-                    <Text style={styles.dribbbleExerciseTitle}>
+                    <Text
+                      style={[
+                        styles.dribbbleExerciseTitle,
+                        { color: colors.textPrimary },
+                      ]}
+                    >
                       {exercise.title}
                     </Text>
-                    <Text style={styles.dribbbleExerciseDesc} numberOfLines={2}>
+                    <Text
+                      style={[
+                        styles.dribbbleExerciseDesc,
+                        { color: colors.textSecondary },
+                      ]}
+                      numberOfLines={2}
+                    >
                       {exercise.description ??
                         "Open this exercise to review instructions and step progress."}
                     </Text>
 
-                    <View style={styles.dribbbleExerciseFooter}>
+                    <View
+                      style={[
+                        styles.dribbbleExerciseFooter,
+                        { borderTopColor: colors.border },
+                      ]}
+                    >
                       <View style={styles.dribbbleMetaItem}>
-                        <Ionicons name="time-outline" size={14} color="#A0A0A0" />
-                        <Text style={styles.dribbbleMetaText}>
+                        <Ionicons
+                          name="time-outline"
+                          size={14}
+                          color={colors.textMuted}
+                        />
+                        <Text
+                          style={[
+                            styles.dribbbleMetaText,
+                            { color: colors.textMuted },
+                          ]}
+                        >
                           {formatDuration(exercise.totalDurationSec)}
                         </Text>
                       </View>
                       <View style={styles.dribbbleMetaItem}>
-                        <Ionicons name="flash-outline" size={14} color="#A0A0A0" />
-                        <Text style={styles.dribbbleMetaText}>
-                          {exercise.progress.completedStepsCount}/{exercise.progress.stepsCount} steps
+                        <Ionicons
+                          name="flash-outline"
+                          size={14}
+                          color={colors.textMuted}
+                        />
+                        <Text
+                          style={[
+                            styles.dribbbleMetaText,
+                            { color: colors.textMuted },
+                          ]}
+                        >
+                          {exercise.progress.completedStepsCount}/
+                          {exercise.progress.stepsCount} steps
                         </Text>
                       </View>
                       {exercise.progress.isFinished && (
-                        <View style={styles.dribbbleFinishedBadge}>
-                          <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
-                          <Text style={styles.dribbbleFinishedText}>Done</Text>
+                        <View
+                          style={[
+                            styles.dribbbleFinishedBadge,
+                            { backgroundColor: colors.success + "18" },
+                          ]}
+                        >
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={14}
+                            color={colors.success}
+                          />
+                          <Text
+                            style={[
+                              styles.dribbbleFinishedText,
+                              { color: colors.success },
+                            ]}
+                          >
+                            Done
+                          </Text>
                         </View>
                       )}
                     </View>
@@ -326,7 +530,9 @@ export default function ProgramExercisesScreen() {
             ))}
             {exercises.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No exercises found.</Text>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  No exercises found.
+                </Text>
               </View>
             ) : null}
           </View>
@@ -355,7 +561,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF80",
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -366,17 +572,15 @@ const styles = StyleSheet.create({
   },
   dribbbleHeaderSubtitle: {
     fontSize: 12,
-    color: "#66BB6A",
     fontWeight: "600",
   },
   dribbbleHeaderTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#333",
   },
   dribbbleHeroCard: {
-    backgroundColor: "#FFFFFFCC",
     borderRadius: 30,
+    borderWidth: 1,
     padding: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -388,7 +592,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 30,
-    backgroundColor: "#E2EBD5",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
@@ -399,28 +602,25 @@ const styles = StyleSheet.create({
   dribbbleHeroEyebrow: {
     fontSize: 12,
     fontWeight: "800",
-    color: "#66BB6A",
     letterSpacing: 1,
     marginBottom: 8,
   },
   dribbbleHeroTitle: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#333",
     textAlign: "center",
     marginBottom: 8,
   },
   dribbbleHeroMeta: {
     fontSize: 14,
-    color: "#A0A0A0",
     fontWeight: "600",
   },
   exerciseList: {
     gap: 16,
   },
   dribbbleExerciseCard: {
-    backgroundColor: "#FFFFFFCC",
     borderRadius: 30,
+    borderWidth: 1,
     padding: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -436,7 +636,6 @@ const styles = StyleSheet.create({
   dribbbleExerciseEyebrow: {
     fontSize: 12,
     fontWeight: "800",
-    color: "#66BB6A",
   },
   favoriteButton: {
     padding: 4,
@@ -444,12 +643,10 @@ const styles = StyleSheet.create({
   dribbbleExerciseTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#333",
     marginBottom: 8,
   },
   dribbbleExerciseDesc: {
     fontSize: 14,
-    color: "#666",
     lineHeight: 22,
     marginBottom: 16,
   },
@@ -459,7 +656,6 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: "#F5F5F5",
   },
   dribbbleMetaItem: {
     flexDirection: "row",
@@ -469,13 +665,11 @@ const styles = StyleSheet.create({
   dribbbleMetaText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#A0A0A0",
   },
   dribbbleFinishedBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#E8F5E9",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -484,7 +678,6 @@ const styles = StyleSheet.create({
   dribbbleFinishedText: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#4CAF50",
   },
   emptyState: {
     alignItems: "center",
@@ -496,7 +689,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emptyText: {
-    color: "#A0A0A0",
     fontSize: 14,
   },
   modalOverlay: {
@@ -507,8 +699,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: "#FFF",
     borderRadius: 30,
+    borderWidth: 1,
     padding: 24,
     width: "100%",
     maxWidth: 340,
@@ -517,12 +709,10 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#333",
     marginBottom: 8,
   },
   modalDescription: {
     fontSize: 14,
-    color: "#666",
     textAlign: "center",
     marginBottom: 20,
   },
@@ -537,23 +727,15 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#F5F5F5",
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  dayButtonSelected: {
-    backgroundColor: "#4EAF63",
   },
   dayText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#666",
-  },
-  dayTextSelected: {
-    color: "#FFF",
   },
   modalConfirmBtn: {
-    backgroundColor: "#4EAF63",
     paddingVertical: 14,
     borderRadius: 16,
     width: "100%",
@@ -561,7 +743,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalConfirmText: {
-    color: "#FFF",
     fontWeight: "800",
     fontSize: 16,
   },
@@ -571,7 +752,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalCancelText: {
-    color: "#999",
     fontWeight: "700",
     fontSize: 14,
   },
